@@ -1,5 +1,3 @@
-import { horizonUrl, networkPassphrase } from "@stellar-scaffold/app-lib"
-import { vault } from "@stellar-scaffold/app-lib/clients"
 import {
 	ArrowLineDown,
 	ArrowLineUp,
@@ -9,6 +7,8 @@ import {
 	Wallet,
 } from "@phosphor-icons/react"
 import * as StellarSdk from "@stellar/stellar-sdk"
+import { horizonUrl, networkPassphrase } from "@stellar-scaffold/app-lib"
+import { vault } from "@stellar-scaffold/app-lib/clients"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useVault } from "../../hooks/useVault"

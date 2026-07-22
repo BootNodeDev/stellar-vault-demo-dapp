@@ -1,55 +1,43 @@
-import {
-	type ISupportedWallet,
-	StellarWalletsKit,
-	type WalletNetwork,
-	allowAllModules,
-} from "@creit.tech/stellar-wallets-kit"
+import { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit"
+import { defaultModules } from "@creit.tech/stellar-wallets-kit/modules/utils"
 import { Horizon } from "@stellar/stellar-sdk"
 import { networkPassphrase, stellarNetwork } from "./env"
 import storage from "./storage"
 
-const kit: StellarWalletsKit = new StellarWalletsKit({
-	network: networkPassphrase as WalletNetwork,
-	modules: allowAllModules(),
+StellarWalletsKit.init({
+	network: networkPassphrase,
+	modules: defaultModules(),
 })
 
 export const connectWallet = async () => {
-	await kit.openModal({
-		modalTitle: "Connect to your wallet",
-		onWalletSelected: (option: ISupportedWallet) => {
-			const selectedId = option.id
-			kit.setWallet(selectedId)
+	// `authModal` opens the wallet picker, sets the chosen wallet as the active
+	// module and returns its address in one step (replaces v1's `openModal` +
+	// `onWalletSelected` callback).
+	const { address } = await StellarWalletsKit.authModal()
+	const selectedId = StellarWalletsKit.selectedModule.productId
 
-			// Now open selected wallet's login flow by calling `getAddress` --
-			// Yes, it's strange that a getter has a side effect of opening a modal
-			void kit.getAddress().then((address) => {
-				// Once `getAddress` returns successfully, we know they actually
-				// connected the selected wallet, and we set our localStorage
-				if (address.address) {
-					storage.setItem("walletId", selectedId)
-					storage.setItem("walletAddress", address.address)
-				} else {
-					storage.setItem("walletId", "")
-					storage.setItem("walletAddress", "")
-				}
-			})
-			if (selectedId == "freighter" || selectedId == "hot-wallet") {
-				void kit.getNetwork().then((network) => {
-					if (network.network && network.networkPassphrase) {
-						storage.setItem("walletNetwork", network.network)
-						storage.setItem("networkPassphrase", network.networkPassphrase)
-					} else {
-						storage.setItem("walletNetwork", "")
-						storage.setItem("networkPassphrase", "")
-					}
-				})
-			}
-		},
-	})
+	if (address) {
+		storage.setItem("walletId", selectedId)
+		storage.setItem("walletAddress", address)
+	} else {
+		storage.setItem("walletId", "")
+		storage.setItem("walletAddress", "")
+	}
+
+	if (selectedId === "freighter" || selectedId === "hot-wallet") {
+		const network = await StellarWalletsKit.getNetwork()
+		if (network.network && network.networkPassphrase) {
+			storage.setItem("walletNetwork", network.network)
+			storage.setItem("networkPassphrase", network.networkPassphrase)
+		} else {
+			storage.setItem("walletNetwork", "")
+			storage.setItem("networkPassphrase", "")
+		}
+	}
 }
 
 export const disconnectWallet = async () => {
-	await kit.disconnect()
+	await StellarWalletsKit.disconnect()
 	storage.removeItem("walletId")
 	storage.removeItem("walletAddress")
 	storage.removeItem("walletNetwork")
@@ -106,4 +94,4 @@ export const fetchBalances = async (address: string) => {
 	}
 }
 
-export const wallet = kit
+export const wallet = StellarWalletsKit

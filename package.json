@@ -13,5 +13,9 @@
     "app-lib/clients/*",
     "e2e"
   ],
+  "overrides": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
   "prettier": "@theahaco/ts-config/prettier"
 }
