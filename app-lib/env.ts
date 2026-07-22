@@ -1,4 +1,4 @@
-import { WalletNetwork } from "@creit.tech/stellar-wallets-kit"
+import { Networks } from "@creit.tech/stellar-wallets-kit"
 import { z } from "zod"
 
 type NetworkType = "mainnet" | "testnet" | "futurenet" | "local"
@@ -19,7 +19,7 @@ const envSchema = z.object({
 		"LOCAL",
 		"STANDALONE", // deprecated in favor of LOCAL
 	] as const),
-	PUBLIC_STELLAR_NETWORK_PASSPHRASE: z.nativeEnum(WalletNetwork),
+	PUBLIC_STELLAR_NETWORK_PASSPHRASE: z.enum(Networks),
 	PUBLIC_STELLAR_RPC_URL: z.string(),
 	PUBLIC_STELLAR_HORIZON_URL: z.string(),
 })
@@ -32,7 +32,7 @@ const env: z.infer<typeof envSchema> = parsed.success
 			// Default to testnet so deploys (Vercel) and fresh clones work with no
 			// env vars. Override via app/.env for a local network.
 			PUBLIC_STELLAR_NETWORK: "TESTNET",
-			PUBLIC_STELLAR_NETWORK_PASSPHRASE: WalletNetwork.TESTNET,
+			PUBLIC_STELLAR_NETWORK_PASSPHRASE: Networks.TESTNET,
 			PUBLIC_STELLAR_RPC_URL: "https://soroban-testnet.stellar.org",
 			PUBLIC_STELLAR_HORIZON_URL: "https://horizon-testnet.stellar.org",
 		}
