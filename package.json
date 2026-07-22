@@ -1,0 +1,17 @@
+{
+  "name": "@stellar-scaffold/ui",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm start",
+    "prestart": "node scripts/dev-guard.mjs",
+    "start": "npm start --workspace app"
+  },
+  "workspaces": [
+    "app",
+    "app-lib",
+    "app-lib/clients/*",
+    "e2e"
+  ],
+  "prettier": "@theahaco/ts-config/prettier"
+}

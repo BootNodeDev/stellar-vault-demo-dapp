@@ -1,0 +1,518 @@
+/* ============================================================
+   Ballast Vault — product UI (dark, refined, non-terminal)
+   One sans family (Geist), one accent (azure), hairline ledger
+   structure, state-driven motion. No glass, no glow, no hero.
+   ============================================================ */
+
+:root {
+	--bg: #0e0f13;
+	--surface: #15171d; /* panels */
+	--surface-2: #1b1e26; /* inputs, hover */
+	--line: rgba(255, 255, 255, 0.07);
+	--line-2: rgba(255, 255, 255, 0.13);
+
+	--text: #e9eaee;
+	--muted: #9aa0ac;
+	--faint: #666c7a;
+
+	--accent: #4c8dff;
+	--accent-hover: #6aa0ff;
+	--accent-soft: rgba(76, 141, 255, 0.12);
+	--accent-ink: #070a11;
+	--neg: #ff6b6b;
+	--neg-soft: rgba(255, 107, 107, 0.1);
+	--warn: #e8b15c;
+
+	--f: "Geist", system-ui, -apple-system, sans-serif;
+	--mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+
+	--r: 12px;
+	--r-sm: 8px;
+	--nav-h: 64px;
+	--maxw: 960px;
+
+	--dur: 0.18s;
+	--ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+html,
+body,
+#root {
+	height: 100%;
+}
+body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--f);
+	font-size: 15px;
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	letter-spacing: -0.006em;
+}
+.mono {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.02em;
+}
+a {
+	color: inherit;
+	text-decoration: none;
+}
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* The scaffold ships a global `button:hover` that sets a light background.
+   On our dark buttons that means light-on-light, unreadable text. Neutralize
+   it to a dark hover; class rules below (e.g. .btn) still win via specificity. */
+button:hover:not(:disabled) {
+	background: var(--surface-2);
+	color: var(--text);
+}
+
+/* ---------- Shell ---------- */
+.app-shell {
+	min-height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.topbar {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	height: var(--nav-h);
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	padding: 0 24px;
+	border-bottom: 1px solid var(--line);
+	background: var(--bg);
+}
+.brand {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	color: var(--text);
+}
+.brand-icon {
+	color: var(--accent);
+	display: grid;
+	place-items: center;
+}
+.brand-name {
+	font-weight: 600;
+	font-size: 15px;
+	letter-spacing: -0.01em;
+}
+.brand-sub {
+	color: var(--faint);
+	font-size: 13px;
+	padding-left: 9px;
+	margin-left: 3px;
+	border-left: 1px solid var(--line-2);
+}
+.topnav {
+	display: flex;
+	gap: 4px;
+	margin-left: 10px;
+}
+.topnav a {
+	color: var(--muted);
+	font-size: 14px;
+	font-weight: 500;
+	padding: 6px 11px;
+	border-radius: var(--r-sm);
+	transition: color var(--dur), background var(--dur);
+}
+.topnav a:hover {
+	color: var(--text);
+	background: var(--surface-2);
+}
+.topnav a.is-active {
+	color: var(--text);
+	background: var(--surface-2);
+}
+.topbar-right {
+	margin-left: auto;
+}
+
+.main {
+	flex: 1;
+	width: 100%;
+	max-width: var(--maxw);
+	margin: 0 auto;
+	padding: 44px 24px 80px;
+}
+.foot {
+	border-top: 1px solid var(--line);
+	padding: 18px 24px;
+	color: var(--faint);
+	font-size: 12px;
+	font-family: var(--mono);
+}
+
+/* ---------- Vault head ---------- */
+.vhead {
+	margin-bottom: 28px;
+}
+.vhead h1 {
+	font-size: 26px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	text-wrap: balance;
+}
+.vhead p {
+	color: var(--muted);
+	margin-top: 8px;
+	max-width: 60ch;
+	font-size: 15px;
+}
+
+/* ---------- Stat strip (data header, not a hero) ---------- */
+.stats {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	border: 1px solid var(--line);
+	border-radius: var(--r);
+	background: var(--surface);
+	overflow: hidden;
+	margin-bottom: 24px;
+}
+.stat {
+	padding: 18px 20px;
+	border-right: 1px solid var(--line);
+}
+.stat:last-child {
+	border-right: none;
+}
+.stat-k {
+	color: var(--muted);
+	font-size: 13px;
+	font-weight: 500;
+}
+.stat-v {
+	margin-top: 8px;
+	font-size: 22px;
+	font-weight: 500;
+}
+.stat-u {
+	color: var(--faint);
+	font-size: 12px;
+	margin-top: 3px;
+	font-family: var(--mono);
+}
+
+/* ---------- Layout grid ---------- */
+.cols {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
+	align-items: start;
+}
+
+.panel {
+	border: 1px solid var(--line);
+	border-radius: var(--r);
+	background: var(--surface);
+	padding: 22px;
+}
+.panel-h {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 15px;
+	font-weight: 600;
+	margin-bottom: 18px;
+	color: var(--text);
+}
+.panel-h svg {
+	color: var(--muted);
+}
+
+/* Position */
+.pos-v {
+	font-size: 30px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+.pos-rows {
+	margin-top: 18px;
+}
+.pos-row {
+	display: flex;
+	justify-content: space-between;
+	padding: 11px 0;
+	border-top: 1px solid var(--line);
+	font-size: 14px;
+}
+.pos-row .k {
+	color: var(--muted);
+}
+.muted {
+	color: var(--muted);
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+/* ---------- Segmented tabs ---------- */
+.seg {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 3px;
+	padding: 3px;
+	background: var(--bg);
+	border: 1px solid var(--line);
+	border-radius: var(--r-sm);
+	margin-bottom: 20px;
+}
+.seg button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 7px;
+	padding: 9px;
+	border: none;
+	background: transparent;
+	color: var(--muted);
+	font-family: var(--f);
+	font-size: 14px;
+	font-weight: 500;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: color var(--dur), background var(--dur);
+}
+.seg button:hover {
+	background: var(--surface-2);
+	color: var(--text);
+}
+.seg button.is-active {
+	color: var(--text);
+	background: var(--surface-2);
+}
+
+/* ---------- Field ---------- */
+.field-k {
+	display: block;
+	color: var(--muted);
+	font-size: 13px;
+	font-weight: 500;
+	margin-bottom: 8px;
+}
+.inp {
+	display: flex;
+	align-items: center;
+	border: 1px solid var(--line-2);
+	border-radius: var(--r-sm);
+	background: var(--bg);
+	transition: border-color var(--dur);
+}
+.inp:focus-within {
+	border-color: var(--accent);
+}
+.inp input {
+	flex: 1;
+	min-width: 0;
+	background: transparent;
+	border: none;
+	outline: none;
+	color: var(--text);
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 22px;
+	padding: 14px 16px;
+}
+.inp input::placeholder {
+	color: var(--faint);
+}
+.inp .u {
+	padding-right: 16px;
+	color: var(--muted);
+	font-family: var(--mono);
+	font-size: 14px;
+}
+.est {
+	margin-top: 10px;
+	color: var(--muted);
+	font-family: var(--mono);
+	font-size: 13px;
+}
+.est b {
+	color: var(--accent);
+	font-weight: 500;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	width: 100%;
+	margin-top: 18px;
+	padding: 13px 16px;
+	border: 1px solid transparent;
+	border-radius: var(--r-sm);
+	background: var(--accent);
+	color: var(--accent-ink);
+	font-family: var(--f);
+	font-weight: 600;
+	font-size: 15px;
+	cursor: pointer;
+	transition: background var(--dur), transform var(--dur), opacity var(--dur);
+}
+.btn:hover:not(:disabled) {
+	background: var(--accent-hover);
+}
+.btn:active:not(:disabled) {
+	transform: scale(0.985);
+}
+.btn:disabled {
+	background: var(--surface-2);
+	color: var(--faint);
+	cursor: not-allowed;
+}
+
+/* ---------- Status ---------- */
+.status {
+	margin-top: 14px;
+	font-family: var(--mono);
+	font-size: 13px;
+	padding: 11px 13px;
+	border-radius: var(--r-sm);
+	border: 1px solid var(--line);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	animation: fade var(--dur) var(--ease);
+}
+.status--success {
+	color: var(--accent);
+	border-color: var(--accent-soft);
+	background: var(--accent-soft);
+}
+.status--error {
+	color: var(--neg);
+	border-color: var(--neg-soft);
+	background: var(--neg-soft);
+}
+.status--pending {
+	color: var(--warn);
+}
+.status .spin {
+	animation: spin 0.7s linear infinite;
+}
+@keyframes fade {
+	from {
+		opacity: 0;
+		transform: translateY(-3px);
+	}
+}
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.faucet {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 18px;
+	padding-top: 16px;
+	border-top: 1px solid var(--line);
+	color: var(--muted);
+	font-size: 13px;
+	width: 100%;
+	transition: color var(--dur);
+}
+.faucet:hover {
+	color: var(--accent);
+}
+
+/* ---------- Skeleton ---------- */
+.skel {
+	display: inline-block;
+	height: 0.9em;
+	width: 4.5ch;
+	border-radius: 4px;
+	background: linear-gradient(90deg, var(--surface-2), var(--line-2), var(--surface-2));
+	background-size: 200% 100%;
+	animation: shimmer 1.3s ease-in-out infinite;
+	vertical-align: middle;
+}
+.skel.w2 {
+	width: 8ch;
+}
+@keyframes shimmer {
+	to {
+		background-position: -200% 0;
+	}
+}
+
+/* ---------- Connect controls (scaffold) ---------- */
+.connect-account {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.connect-account button {
+	font-family: var(--f);
+	font-weight: 500;
+	font-size: 14px;
+	border-radius: var(--r-sm);
+	border: 1px solid var(--line-2);
+	background: var(--surface-2);
+	color: var(--text);
+	padding: 8px 13px;
+	cursor: pointer;
+	transition: border-color var(--dur);
+}
+.connect-account button:hover {
+	background: var(--surface);
+	color: var(--text);
+	border-color: var(--accent);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 780px) {
+	.stats {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.stat:nth-child(2) {
+		border-right: none;
+	}
+	.stat:nth-child(1),
+	.stat:nth-child(2) {
+		border-bottom: 1px solid var(--line);
+	}
+	.cols {
+		grid-template-columns: 1fr;
+	}
+	.topnav {
+		display: none;
+	}
+	.brand-sub {
+		display: none;
+	}
+	.main {
+		padding: 32px 16px 60px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+	}
+}

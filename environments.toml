@@ -1,0 +1,13 @@
+### Development environment configuration
+[development.network]
+rpc-url = "https://soroban-testnet.stellar.org"
+network-passphrase = "Test SDF Network ; September 2015"
+
+[[development.accounts]]
+name = "deployer"
+default = true
+
+[development.contracts]
+# El vault se compila, deploya y se le genera el cliente TS. El constructor
+# recibe el SAC de USDC de testnet como token subyacente.
+vault = { client = true, constructor_args = "--asset CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA" }

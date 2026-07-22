@@ -1,0 +1,20 @@
+# Rust's output directory
+target
+
+# Local settings
+.soroban
+.stellar
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Env & local config (keep out of VCS; may hold keys/identities)
+.env
+.env.*
+!.env.example
+.config/
+
+# OS
+.DS_Store
