@@ -1,6 +1,7 @@
 import { Vault } from "@phosphor-icons/react"
-import { Outlet, Route, Routes } from "react-router-dom"
+import { NavLink, Outlet, Route, Routes } from "react-router-dom"
 import ConnectAccount from "./components/ConnectAccount"
+import AdminPage from "./pages/AdminPage"
 import Home from "./pages/Home"
 
 function App() {
@@ -8,10 +9,14 @@ function App() {
 		<Routes>
 			<Route element={<AppLayout />}>
 				<Route path="/" element={<Home />} />
+				<Route path="/admin" element={<AdminPage />} />
 			</Route>
 		</Routes>
 	)
 }
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+	isActive ? "is-active" : undefined
 
 const AppLayout = () => (
 	<div className="app-shell">
@@ -23,6 +28,14 @@ const AppLayout = () => (
 				<span className="brand-name">Ballast</span>
 				<span className="brand-sub">Reinsurance Vault</span>
 			</div>
+			<nav className="topnav">
+				<NavLink to="/" end className={navLinkClass}>
+					Vault
+				</NavLink>
+				<NavLink to="/admin" className={navLinkClass}>
+					Admin
+				</NavLink>
+			</nav>
 			<div className="topbar-right">
 				<ConnectAccount />
 			</div>
