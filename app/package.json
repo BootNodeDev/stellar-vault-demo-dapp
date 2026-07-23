@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier . --write",
     "prepare": "husky",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest run"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -41,7 +42,8 @@
     "typescript": "^7.0.2",
     "vite": "^8.1.5",
     "vite-plugin-node-polyfills": "^0.28.0",
-    "vite-plugin-wasm": "^3.6.0"
+    "vite-plugin-wasm": "^3.6.0",
+    "vitest": "^4.1.10"
   },
   "lint-staged": {
     "**/*": [
