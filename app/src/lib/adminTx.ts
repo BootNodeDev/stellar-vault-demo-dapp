@@ -28,8 +28,17 @@ export interface AdminTxSummary {
 // so a stale, unsubmitted admin tx doesn't stay valid indefinitely.
 const TX_TIMEOUT_SECONDS = 24 * 60 * 60
 
+// Submission is two-step: sendTransaction only queues the tx, so we poll
+// getTransaction for ledger finality (30 × 2s ≈ 60s, well past the ~5s close).
+const SUBMIT_POLL_ATTEMPTS = 30
+const SUBMIT_POLL_INTERVAL_MS = 2000
+
 function server(): rpc.Server {
 	return new rpc.Server(rpcUrl)
+}
+
+function delay(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 /**
@@ -96,15 +105,37 @@ export function describeAdminTx(xdr: string): AdminTxSummary {
 }
 
 /**
- * Sends an assembled, sufficiently-signed transaction envelope via RPC.
+ * Sends an assembled, sufficiently-signed transaction envelope via RPC and
+ * polls for ledger finality. Resolves with the hash only after the tx lands
+ * with SUCCESS, so the caller never reports success for a tx that was merely
+ * queued and then failed to confirm.
  */
 export async function submitAdminTx(xdr: string): Promise<string> {
 	const tx = TransactionBuilder.fromXDR(xdr, networkPassphrase)
-	const result = await server().sendTransaction(tx)
-	if (result.status === "ERROR") {
+	const srv = server()
+	const sent = await srv.sendTransaction(tx)
+	if (sent.status === "ERROR") {
 		throw new Error(
-			`Submit failed: ${result.errorResult?.toString() ?? "unknown error"}`,
+			`Submit rejected: ${sent.errorResult?.toString() ?? "unknown error"}`,
 		)
 	}
-	return result.hash
+	if (sent.status === "TRY_AGAIN_LATER") {
+		throw new Error("Network is busy — submit again in a moment")
+	}
+
+	for (let attempt = 0; attempt < SUBMIT_POLL_ATTEMPTS; attempt++) {
+		const got = await srv.getTransaction(sent.hash)
+		if (got.status === rpc.Api.GetTransactionStatus.SUCCESS) {
+			return sent.hash
+		}
+		if (got.status === rpc.Api.GetTransactionStatus.FAILED) {
+			throw new Error(
+				"Transaction failed on-chain — the allowlist was not updated",
+			)
+		}
+		await delay(SUBMIT_POLL_INTERVAL_MS)
+	}
+	throw new Error(
+		"Timed out waiting for confirmation — check the explorer before retrying",
+	)
 }

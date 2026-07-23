@@ -257,9 +257,12 @@ function SignView({ hash }: { hash: string }) {
 
 	async function submit() {
 		try {
-			setStatus({ state: "pending", msg: "Submitting to the network" })
+			setStatus({
+				state: "pending",
+				msg: "Submitting and waiting for on-chain confirmation…",
+			})
 			await submitAdminTx(xdr as string)
-			setStatus({ state: "success", msg: "Submitted — allowlist updated" })
+			setStatus({ state: "success", msg: "Confirmed — allowlist updated" })
 		} catch (e) {
 			setStatus({
 				state: "error",
