@@ -4,6 +4,7 @@ import { networkPassphrase } from "@stellar-scaffold/app-lib"
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAccountSigners } from "../hooks/useAccountSigners"
+import { useIsAdmin } from "../hooks/useIsAdmin"
 import { useWallet } from "../hooks/useWallet"
 import {
 	buildAdminTx,
@@ -31,6 +32,23 @@ function adminLinkFor(xdr: string): string {
 
 export default function AdminPage() {
 	const { hash } = useLocation()
+	const { isAdmin, isLoading, address } = useIsAdmin()
+
+	function content() {
+		if (isLoading) {
+			return <p className="muted">Checking admin access…</p>
+		}
+		if (!isAdmin) {
+			return (
+				<p className="muted">
+					{address
+						? "This wallet is not a signer of the vault's gov account. Connect an admin wallet to manage the allowlist."
+						: "Connect an admin wallet (a gov multisig signer) to manage the allowlist."}
+				</p>
+			)
+		}
+		return hash.startsWith("#tx=") ? <SignView hash={hash} /> : <ComposeView />
+	}
 
 	return (
 		<div>
@@ -43,9 +61,7 @@ export default function AdminPage() {
 				</p>
 			</header>
 
-			<section className="panel">
-				{hash.startsWith("#tx=") ? <SignView hash={hash} /> : <ComposeView />}
-			</section>
+			<section className="panel">{content()}</section>
 		</div>
 	)
 }
