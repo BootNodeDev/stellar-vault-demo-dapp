@@ -51,14 +51,13 @@ export default function AdminPage() {
 }
 
 function ComposeView() {
+	const navigate = useNavigate()
 	const [op, setOp] = useState<AdminOp>("allow")
 	const [target, setTarget] = useState("")
 	const [addressError, setAddressError] = useState<string | null>(null)
 	const [status, setStatus] = useState<Status>({ state: "idle" })
-	const [link, setLink] = useState<string | null>(null)
 
 	async function compose() {
-		setLink(null)
 		if (!isValidStellarAddress(target)) {
 			setAddressError("Enter a valid Stellar address (G... or C...)")
 			return
@@ -70,11 +69,9 @@ function ComposeView() {
 				msg: "Building and simulating the transaction",
 			})
 			const xdr = await buildAdminTx(op, target)
-			setLink(adminLinkFor(xdr))
-			setStatus({
-				state: "success",
-				msg: "Transaction assembled — share the link below to start collecting signatures",
-			})
+			// Drop the composer straight into the sign round so they add the
+			// first signature instead of hand-carrying a link to themselves.
+			void navigate(`/admin${encodeAdminLink(xdr).hash}`)
 		} catch (e) {
 			setStatus({
 				state: "error",
@@ -130,20 +127,11 @@ function ComposeView() {
 				{status.state === "pending" && (
 					<CircleNotch size={17} className="spin" />
 				)}
-				{status.state === "pending" ? "Building…" : "Build & get link"}
+				{status.state === "pending" ? "Building…" : "Build & start signing"}
 			</button>
 
-			{status.state === "success" && (
-				<div className="status status--success">{status.msg}</div>
-			)}
 			{status.state === "error" && (
 				<div className="status status--error">{status.msg}</div>
-			)}
-
-			{link && (
-				<div className="mono" style={{ wordBreak: "break-all", marginTop: 14 }}>
-					{link}
-				</div>
 			)}
 		</>
 	)
@@ -186,6 +174,7 @@ function SignView({ hash }: { hash: string }) {
 	const signersQuery = useAccountSigners()
 	const { xdr, summary, error, setXdr, setSummary } = useDecodedAdminTx(hash)
 	const [status, setStatus] = useState<Status>({ state: "idle" })
+	const [submittedHash, setSubmittedHash] = useState<string | null>(null)
 
 	const collected = useMemo(() => {
 		if (!xdr || !signersQuery.data) return null
@@ -205,6 +194,48 @@ function SignView({ hash }: { hash: string }) {
 	}
 	if (!summary || !xdr) {
 		return <p className="muted">Reading transaction…</p>
+	}
+
+	if (submittedHash) {
+		const net =
+			networkPassphrase === StellarSdk.Networks.PUBLIC ? "public" : "testnet"
+		return (
+			<>
+				<div className="panel-h">
+					<SealCheck size={18} /> Submitted
+				</div>
+				<div className="status status--success">
+					Operation confirmed on-chain — the allowlist was updated.
+				</div>
+				<div className="pos-rows">
+					<div className="pos-row">
+						<span className="k">Operation</span>
+						<span className="mono">{summary.op}</span>
+					</div>
+					<div className="pos-row">
+						<span className="k">Target</span>
+						<span className="mono">{summary.target}</span>
+					</div>
+					<div className="pos-row">
+						<span className="k">Transaction</span>
+						<span className="mono">
+							{submittedHash.slice(0, 8)}…{submittedHash.slice(-8)}
+						</span>
+					</div>
+				</div>
+				<a
+					className="btn"
+					href={`https://stellar.expert/explorer/${net}/tx/${submittedHash}`}
+					target="_blank"
+					rel="noreferrer"
+				>
+					View on explorer
+				</a>
+				<button className="btn" onClick={() => navigate("/admin")}>
+					Compose another
+				</button>
+			</>
+		)
 	}
 
 	const expired = summary.maxTime > 0 && summary.maxTime * 1000 < Date.now()
@@ -261,7 +292,8 @@ function SignView({ hash }: { hash: string }) {
 				state: "pending",
 				msg: "Submitting and waiting for on-chain confirmation…",
 			})
-			await submitAdminTx(xdr as string)
+			const hash = await submitAdminTx(xdr as string)
+			setSubmittedHash(hash)
 			setStatus({ state: "success", msg: "Confirmed — allowlist updated" })
 		} catch (e) {
 			setStatus({
