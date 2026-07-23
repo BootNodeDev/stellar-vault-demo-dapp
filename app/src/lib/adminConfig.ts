@@ -4,3 +4,8 @@
 // instead of re-typing the address.
 export const ADMIN_VAULT_CONTRACT_ID =
 	"CAKZLKMWWVFUAGGVGX5EI6F3AOZEORSNM4D2POBSU7DXD3ISRXIIVW42"
+
+// The gov multisig account itself — transaction source for `allow`/`disallow`
+// invokes, and the account whose signers/thresholds gate the admin flow.
+export const ADMIN_ACCOUNT =
+	"GDVL4VKURSZ7R66IWAORMUNHYHHDQ5Y65TMPWIGV6WDVKTRZZLQBYNXQ"

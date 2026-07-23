@@ -4,6 +4,7 @@ import {
 	Keypair,
 	Networks,
 	Operation,
+	StrKey,
 	type Transaction,
 	TransactionBuilder,
 } from "@stellar/stellar-sdk"
@@ -87,6 +88,21 @@ describe("computeCollected", () => {
 		tx.sign(outsider)
 
 		const result = computeCollected(tx, signers, medThreshold)
+		expect(result.weight).toBe(1)
+		expect(result.perSigner).toEqual([{ key: signerA.publicKey(), weight: 1 }])
+	})
+
+	it("ignores a non-ed25519 signer (e.g. sha256_hash) instead of throwing", () => {
+		const tx = buildUnsignedTx()
+		tx.sign(signerA)
+		const hashxSigner = {
+			key: StrKey.encodeSha256Hash(Buffer.alloc(32, 7)),
+			weight: 1,
+		}
+		const signersWithHashx = [...signers, hashxSigner]
+
+		const result = computeCollected(tx, signersWithHashx, medThreshold)
+
 		expect(result.weight).toBe(1)
 		expect(result.perSigner).toEqual([{ key: signerA.publicKey(), weight: 1 }])
 	})

@@ -38,7 +38,15 @@ export function computeCollected(
 	const perSigner: SignerWeight[] = []
 
 	for (const signer of signers) {
-		const keypair = Keypair.fromPublicKey(signer.key)
+		let keypair: Keypair
+		try {
+			keypair = Keypair.fromPublicKey(signer.key)
+		} catch {
+			// Horizon signers[] can include preauth_tx/sha256_hash entries whose
+			// `key` isn't an ed25519 strkey — this verification method doesn't
+			// apply to them, so they're skipped rather than crashing.
+			continue
+		}
 		const matchIndex = unmatchedSignatures.findIndex((sig) =>
 			keypair.verify(txHash, sig.signature()),
 		)
