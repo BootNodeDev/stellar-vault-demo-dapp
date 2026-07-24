@@ -1,6 +1,6 @@
-import { vault } from "@stellar-scaffold/app-lib/clients"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { useWallet } from "./useWallet"
+import { useWallet } from "@/hooks/useWallet"
+import { vault } from "@/lib/vaultClient"
 
 // Las lecturas del contrato se resuelven por simulación: el `.result` ya viene
 // poblado sin enviar transacción (gratis, sin firma).
