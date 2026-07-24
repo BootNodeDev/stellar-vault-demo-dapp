@@ -24,11 +24,6 @@ describe("encodeAdminLink / decodeAdminLink round trip", () => {
 		expect(hash.startsWith("#tx=")).toBe(true)
 	})
 
-	it("also emits a web+stellar: URI carrying the same xdr", () => {
-		const { uri } = encodeAdminLink(SAMPLE_XDR)
-		expect(uri).toBe(`web+stellar:tx?xdr=${encodeURIComponent(SAMPLE_XDR)}`)
-	})
-
 	it("decodes a fragment without the leading # the same way", () => {
 		const { hash } = encodeAdminLink(SAMPLE_XDR)
 		const decoded = decodeAdminLink(hash.slice(1))

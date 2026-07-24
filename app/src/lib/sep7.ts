@@ -1,14 +1,12 @@
 // Transport for the admin flow: a signed/unsigned transaction envelope travels
-// as a base64url payload in the app's own `#tx=` hash fragment (copy-paste and
-// back-button friendly, no server involved), and — for SEP-7 fidelity — as an
-// equivalent `web+stellar:tx?xdr=` URI. The fragment is untrusted input, so
+// as a base64url payload in the app's own `#tx=` hash fragment — copy-paste and
+// back-button friendly, no server involved. The fragment is untrusted input, so
 // decoding validates strictly and never attempts a partial/garbled result.
 
 const BASE64_URL_CHARS = /^[A-Za-z0-9_-]+$/
 
 export interface AdminLink {
 	hash: string
-	uri: string
 }
 
 export interface DecodedAdminLink {
@@ -28,7 +26,6 @@ function fromBase64Url(base64url: string): string {
 export function encodeAdminLink(xdr: string): AdminLink {
 	return {
 		hash: `#tx=${toBase64Url(xdr)}`,
-		uri: `web+stellar:tx?xdr=${encodeURIComponent(xdr)}`,
 	}
 }
 

@@ -15,6 +15,7 @@ export interface VaultState {
 	shares: bigint // shares del usuario
 	positionValue: bigint // valor de la posición del usuario, en el subyacente
 	sharePrice: number
+	isAllowed: boolean // si el usuario conectado está en el allowlist (KYC)
 }
 
 export function useVault() {
@@ -32,7 +33,9 @@ export function useVault() {
 
 			let shares = 0n
 			let positionValue = 0n
+			let isAllowed = false
 			if (address) {
+				isAllowed = await read<boolean>(vault.is_allowed({ account: address }))
 				shares = await read<bigint>(vault.balance({ account: address }))
 				if (shares > 0n) {
 					positionValue = await read<bigint>(
@@ -44,7 +47,15 @@ export function useVault() {
 			const sharePrice =
 				totalSupply > 0n ? Number(totalAssets) / Number(totalSupply) : 1
 
-			return { totalAssets, totalSupply, symbol, shares, positionValue, sharePrice }
+			return {
+				totalAssets,
+				totalSupply,
+				symbol,
+				shares,
+				positionValue,
+				sharePrice,
+				isAllowed,
+			}
 		},
 	})
 }

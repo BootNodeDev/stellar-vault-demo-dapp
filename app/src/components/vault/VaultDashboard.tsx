@@ -35,8 +35,8 @@ export default function VaultDashboard() {
 			<header className="vhead">
 				<h1>Ballast Reinsurance Vault</h1>
 				<p>
-					Deposit USDC and receive bvUSDC shares tracking the vault&apos;s net asset
-					value. Redeemable on-chain, any time.
+					Deposit USDC and receive bvUSDC shares tracking the vault&apos;s net
+					asset value. Redeemable on-chain, any time.
 				</p>
 			</header>
 
@@ -50,8 +50,16 @@ export default function VaultDashboard() {
 				<Stat k="Shares outstanding" unit="bvUSDC" loading={isLoading}>
 					<AnimatedNumber value={supply} />
 				</Stat>
-				<Stat k="Your position" unit={address ? "USDC" : undefined} loading={isLoading}>
-					{address ? <AnimatedNumber value={position} prefix="$" /> : <span className="mono">—</span>}
+				<Stat
+					k="Your position"
+					unit={address ? "USDC" : undefined}
+					loading={isLoading}
+				>
+					{address ? (
+						<AnimatedNumber value={position} prefix="$" />
+					) : (
+						<span className="mono">—</span>
+					)}
 				</Stat>
 			</section>
 
@@ -61,25 +69,38 @@ export default function VaultDashboard() {
 						<Wallet size={18} /> Your position
 					</div>
 					{!address ? (
-						<p className="muted">Connect a wallet to view your position and deposit.</p>
+						<p className="muted">
+							Connect a wallet to view your position and deposit.
+						</p>
 					) : shares > 0 ? (
 						<>
 							<div className="pos-v mono">
-								${position.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+								$
+								{position.toLocaleString("en-US", {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2,
+								})}
 							</div>
 							<div className="pos-rows">
-								<PosRow k="Shares held" v={`${shares.toLocaleString("en-US", { maximumFractionDigits: 2 })} bvUSDC`} />
+								<PosRow
+									k="Shares held"
+									v={`${shares.toLocaleString("en-US", { maximumFractionDigits: 2 })} bvUSDC`}
+								/>
 								<PosRow
 									k="Share of vault"
-									v={supply > 0 ? `${((shares / supply) * 100).toFixed(2)}%` : "0%"}
+									v={
+										supply > 0
+											? `${((shares / supply) * 100).toFixed(2)}%`
+											: "0%"
+									}
 								/>
 								<PosRow k="Entry price" v={`${sharePrice.toFixed(4)} USDC`} />
 							</div>
 						</>
 					) : (
 						<p className="muted">
-							No shares yet. Deposit USDC on the right to mint your first bvUSDC and start
-							tracking the vault&apos;s NAV.
+							No shares yet. Deposit USDC on the right to mint your first bvUSDC
+							and start tracking the vault&apos;s NAV.
 						</p>
 					)}
 				</section>
@@ -106,7 +127,9 @@ function Stat({
 	return (
 		<div className="stat">
 			<div className="stat-k">{k}</div>
-			<div className="stat-v">{loading ? <span className="skel w2" /> : children}</div>
+			<div className="stat-v">
+				{loading ? <span className="skel w2" /> : children}
+			</div>
 			{unit && <div className="stat-u">{unit}</div>}
 		</div>
 	)
@@ -134,20 +157,28 @@ function ActionPanel() {
 
 	const usdcLine = balances?.[USDC_KEY]
 	const hasTrust = !!usdcLine
-	const usdcBal = usdcLine ? Number(String(usdcLine.balance).replace(/,/g, "")) : 0
+	const usdcBal = usdcLine
+		? Number(String(usdcLine.balance).replace(/,/g, ""))
+		: 0
 	const shareBal = data ? toUnits(data.shares) : 0
 
 	const sharePrice = data?.sharePrice || 1
 	const parsed = parseAmount(amount || "0")
 	const n = Number(amount || 0)
-	const estimate = tab === "deposit" ? n / (sharePrice || 1) : n * (sharePrice || 1)
+	const estimate =
+		tab === "deposit" ? n / (sharePrice || 1) : n * (sharePrice || 1)
 	const available = tab === "deposit" ? usdcBal : shareBal
+	const isAllowed = data?.isAllowed ?? false
+	const kycBlocked = tab === "deposit" && !isAllowed
 	const disabled = !address || parsed <= 0n || status.state === "pending"
 
 	async function enableUsdc() {
 		if (!address) return
 		try {
-			setStatus({ state: "pending", msg: "Confirm the USDC trustline in your wallet" })
+			setStatus({
+				state: "pending",
+				msg: "Confirm the USDC trustline in your wallet",
+			})
 			const server = new StellarSdk.Horizon.Server(horizonUrl)
 			const account = await server.loadAccount(address)
 			const tx = new StellarSdk.TransactionBuilder(account, {
@@ -161,14 +192,26 @@ function ActionPanel() {
 				)
 				.setTimeout(180)
 				.build()
-			const { signedTxXdr } = await signTransaction(tx.toXDR(), { networkPassphrase, address })
+			const { signedTxXdr } = await signTransaction(tx.toXDR(), {
+				networkPassphrase,
+				address,
+			})
 			await server.submitTransaction(
-				StellarSdk.TransactionBuilder.fromXDR(signedTxXdr, networkPassphrase) as StellarSdk.Transaction,
+				StellarSdk.TransactionBuilder.fromXDR(
+					signedTxXdr,
+					networkPassphrase,
+				) as StellarSdk.Transaction,
 			)
-			setStatus({ state: "success", msg: "USDC enabled — mint from the faucet, then deposit" })
+			setStatus({
+				state: "success",
+				msg: "USDC enabled — mint from the faucet, then deposit",
+			})
 			await updateBalances()
 		} catch (e) {
-			setStatus({ state: "error", msg: e instanceof Error ? e.message : "Could not enable USDC" })
+			setStatus({
+				state: "error",
+				msg: e instanceof Error ? e.message : "Could not enable USDC",
+			})
 		}
 	}
 
@@ -177,12 +220,25 @@ function ActionPanel() {
 		try {
 			setStatus({
 				state: "pending",
-				msg: tab === "deposit" ? "Confirm the deposit in your wallet" : "Confirm the withdrawal in your wallet",
+				msg:
+					tab === "deposit"
+						? "Confirm the deposit in your wallet"
+						: "Confirm the withdrawal in your wallet",
 			})
 			const args =
 				tab === "deposit"
-					? { assets: parsed, receiver: address, from: address, operator: address }
-					: { assets: parsed, receiver: address, owner: address, operator: address }
+					? {
+							assets: parsed,
+							receiver: address,
+							from: address,
+							operator: address,
+						}
+					: {
+							assets: parsed,
+							receiver: address,
+							owner: address,
+							operator: address,
+						}
 			const tx =
 				tab === "deposit"
 					? await vault.deposit(args as never, { publicKey: address })
@@ -193,12 +249,21 @@ function ActionPanel() {
 			}
 			setStatus({
 				state: "success",
-				msg: tab === "deposit" ? "Deposit confirmed — shares minted" : "Withdrawal confirmed — USDC returned",
+				msg:
+					tab === "deposit"
+						? "Deposit confirmed — shares minted"
+						: "Withdrawal confirmed — USDC returned",
 			})
 			setAmount("")
-			await Promise.all([qc.invalidateQueries({ queryKey: ["vault"] }), updateBalances()])
+			await Promise.all([
+				qc.invalidateQueries({ queryKey: ["vault"] }),
+				updateBalances(),
+			])
 		} catch (e) {
-			setStatus({ state: "error", msg: e instanceof Error ? e.message : "Something went wrong" })
+			setStatus({
+				state: "error",
+				msg: e instanceof Error ? e.message : "Something went wrong",
+			})
 		}
 	}
 
@@ -222,15 +287,25 @@ function ActionPanel() {
 					<SealCheck size={18} /> Enable USDC
 				</div>
 				<p className="muted">
-					Your wallet hasn&apos;t opted into USDC yet. Establish the trustline once (a
-					standard Stellar opt-in), then mint test USDC and deposit.
+					Your wallet hasn&apos;t opted into USDC yet. Establish the trustline
+					once (a standard Stellar opt-in), then mint test USDC and deposit.
 				</p>
-				<button className="btn" onClick={enableUsdc} disabled={status.state === "pending"}>
-					{status.state === "pending" && <CircleNotch size={17} className="spin" />}
+				<button
+					className="btn"
+					onClick={enableUsdc}
+					disabled={status.state === "pending"}
+				>
+					{status.state === "pending" && (
+						<CircleNotch size={17} className="spin" />
+					)}
 					{status.state === "pending" ? "Awaiting signature" : "Enable USDC"}
 				</button>
-				{status.state === "success" && <div className="status status--success">{status.msg}</div>}
-				{status.state === "error" && <div className="status status--error">{status.msg}</div>}
+				{status.state === "success" && (
+					<div className="status status--success">{status.msg}</div>
+				)}
+				{status.state === "error" && (
+					<div className="status status--error">{status.msg}</div>
+				)}
 				<FaucetLink />
 			</>
 		)
@@ -260,50 +335,75 @@ function ActionPanel() {
 				</button>
 			</div>
 
-			<label className="field-k" htmlFor="amt">
-				{tab === "deposit" ? "Amount to deposit" : "Amount to withdraw"}
-			</label>
-			<div className="inp">
-				<input
-					id="amt"
-					inputMode="decimal"
-					placeholder="0.00"
-					value={amount}
-					onChange={(e) => {
-						setAmount(e.target.value.replace(/[^0-9.]/g, ""))
-						setStatus({ state: "idle" })
-					}}
-				/>
-				<span className="u">{tab === "deposit" ? "USDC" : "bvUSDC"}</span>
-			</div>
+			{kycBlocked ? (
+				<>
+					<div className="status status--error" style={{ marginTop: 12 }}>
+						This wallet isn&apos;t approved to deposit. Deposits are gated by
+						the vault&apos;s KYC allowlist — ask the compliance admin to allow
+						your address. (You can still withdraw an existing position.)
+					</div>
+					<div className="pos-row" style={{ marginTop: 10 }}>
+						<span className="k">Your address</span>
+						<span className="mono">{address}</span>
+					</div>
+				</>
+			) : (
+				<>
+					<label className="field-k" htmlFor="amt">
+						{tab === "deposit" ? "Amount to deposit" : "Amount to withdraw"}
+					</label>
+					<div className="inp">
+						<input
+							id="amt"
+							inputMode="decimal"
+							placeholder="0.00"
+							value={amount}
+							onChange={(e) => {
+								setAmount(e.target.value.replace(/[^0-9.]/g, ""))
+								setStatus({ state: "idle" })
+							}}
+						/>
+						<span className="u">{tab === "deposit" ? "USDC" : "bvUSDC"}</span>
+					</div>
 
-			<div className="est">
-				<span>
-					Available {available.toLocaleString("en-US", { maximumFractionDigits: 2 })}{" "}
-					{tab === "deposit" ? "USDC" : "bvUSDC"}
-				</span>
-				{parsed > 0n && (
-					<span>
-						{" · you receive "}
-						<b>
-							{estimate.toLocaleString("en-US", { maximumFractionDigits: 4 })}{" "}
-							{tab === "deposit" ? "bvUSDC" : "USDC"}
-						</b>
-					</span>
-				)}
-			</div>
+					<div className="est">
+						<span>
+							Available{" "}
+							{available.toLocaleString("en-US", { maximumFractionDigits: 2 })}{" "}
+							{tab === "deposit" ? "USDC" : "bvUSDC"}
+						</span>
+						{parsed > 0n && (
+							<span>
+								{" · you receive "}
+								<b>
+									{estimate.toLocaleString("en-US", {
+										maximumFractionDigits: 4,
+									})}{" "}
+									{tab === "deposit" ? "bvUSDC" : "USDC"}
+								</b>
+							</span>
+						)}
+					</div>
 
-			<button className="btn" disabled={disabled} onClick={submit}>
-				{status.state === "pending" && <CircleNotch size={17} className="spin" />}
-				{status.state === "pending"
-					? "Awaiting signature"
-					: tab === "deposit"
-						? "Deposit USDC"
-						: "Withdraw USDC"}
-			</button>
+					<button className="btn" disabled={disabled} onClick={submit}>
+						{status.state === "pending" && (
+							<CircleNotch size={17} className="spin" />
+						)}
+						{status.state === "pending"
+							? "Awaiting signature"
+							: tab === "deposit"
+								? "Deposit USDC"
+								: "Withdraw USDC"}
+					</button>
 
-			{status.state === "success" && <div className="status status--success">{status.msg}</div>}
-			{status.state === "error" && <div className="status status--error">{status.msg}</div>}
+					{status.state === "success" && (
+						<div className="status status--success">{status.msg}</div>
+					)}
+					{status.state === "error" && (
+						<div className="status status--error">{status.msg}</div>
+					)}
+				</>
+			)}
 
 			<FaucetLink />
 		</>
@@ -313,7 +413,8 @@ function ActionPanel() {
 function FaucetLink() {
 	return (
 		<a className="faucet" href={FAUCET} target="_blank" rel="noreferrer">
-			Need test USDC? Mint from Circle&apos;s faucet — pick Stellar <ArrowUpRight size={14} />
+			Need test USDC? Mint from Circle&apos;s faucet — pick Stellar{" "}
+			<ArrowUpRight size={14} />
 		</a>
 	)
 }

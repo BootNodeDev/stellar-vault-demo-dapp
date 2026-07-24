@@ -3,7 +3,7 @@
 // here so adminTx.ts, and any test/tooling, reference one source of truth
 // instead of re-typing the address.
 export const ADMIN_VAULT_CONTRACT_ID =
-	"CAKZLKMWWVFUAGGVGX5EI6F3AOZEORSNM4D2POBSU7DXD3ISRXIIVW42"
+	"CDBJBS3TTHFGFSTBZQOOY5B6BRFTH35CFOTCT6DE2ZFPDMESFI6VLHKB"
 
 // The gov multisig account itself — transaction source for `allow`/`disallow`
 // invokes, and the account whose signers/thresholds gate the admin flow.
