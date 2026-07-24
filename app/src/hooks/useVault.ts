@@ -1,5 +1,5 @@
 import { vault } from "@stellar-scaffold/app-lib/clients"
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useWallet } from "./useWallet"
 
 // Las lecturas del contrato se resuelven por simulación: el `.result` ya viene
@@ -15,7 +15,6 @@ export interface VaultState {
 	shares: bigint // shares del usuario
 	positionValue: bigint // valor de la posición del usuario, en el subyacente
 	sharePrice: number
-	isAllowed: boolean // si el usuario conectado está en el allowlist (KYC)
 	lpCount: number // cantidad de LPs con posición (holders con shares > 0)
 }
 
@@ -25,6 +24,11 @@ export function useVault() {
 	return useQuery<VaultState>({
 		queryKey: ["vault", address ?? "anon"],
 		refetchInterval: 8000,
+		// Keep the last good data during refetch / transient RPC errors so the
+		// dashboard doesn't flash to empty when a read hiccups (the public testnet
+		// RPC throttles under load).
+		placeholderData: keepPreviousData,
+		retry: 2,
 		queryFn: async () => {
 			const [totalAssets, totalSupply, symbol, lpCount] = await Promise.all([
 				read<bigint>(vault.total_assets()),
@@ -35,9 +39,7 @@ export function useVault() {
 
 			let shares = 0n
 			let positionValue = 0n
-			let isAllowed = false
 			if (address) {
-				isAllowed = await read<boolean>(vault.is_allowed({ account: address }))
 				shares = await read<bigint>(vault.balance({ account: address }))
 				if (shares > 0n) {
 					positionValue = await read<bigint>(
@@ -56,9 +58,26 @@ export function useVault() {
 				shares,
 				positionValue,
 				sharePrice,
-				isAllowed,
 				lpCount,
 			}
+		},
+	})
+}
+
+// Allowlist status is its own small, resilient query keyed by the connected
+// address, so a hiccup in the heavier vault reads never hides the deposit form.
+export function useIsAllowed() {
+	const { address } = useWallet()
+
+	return useQuery<boolean>({
+		queryKey: ["is-allowed", address ?? "anon"],
+		enabled: !!address,
+		refetchInterval: 8000,
+		retry: 2,
+		placeholderData: keepPreviousData,
+		queryFn: async () => {
+			if (!address) return false
+			return read<boolean>(vault.is_allowed({ account: address }))
 		},
 	})
 }

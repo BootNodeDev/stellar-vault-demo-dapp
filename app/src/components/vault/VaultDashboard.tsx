@@ -11,7 +11,7 @@ import { horizonUrl, networkPassphrase } from "@stellar-scaffold/app-lib"
 import { vault } from "@stellar-scaffold/app-lib/clients"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import { useVault } from "../../hooks/useVault"
+import { useIsAllowed, useVault } from "../../hooks/useVault"
 import { useWallet } from "../../hooks/useWallet"
 import { parseAmount, toUnits } from "../../lib/format"
 import { AnimatedNumber } from "../AnimatedNumber"
@@ -153,6 +153,7 @@ type Status = { state: "idle" | "pending" | "success" | "error"; msg?: string }
 function ActionPanel() {
 	const { address, balances, signTransaction, updateBalances } = useWallet()
 	const { data } = useVault()
+	const { data: allowed } = useIsAllowed()
 	const qc = useQueryClient()
 
 	const [tab, setTab] = useState<"deposit" | "withdraw">("deposit")
@@ -172,7 +173,7 @@ function ActionPanel() {
 	const estimate =
 		tab === "deposit" ? n / (sharePrice || 1) : n * (sharePrice || 1)
 	const available = tab === "deposit" ? usdcBal : shareBal
-	const isAllowed = data?.isAllowed ?? false
+	const isAllowed = allowed ?? false
 	const kycBlocked = tab === "deposit" && !isAllowed
 	const disabled = !address || parsed <= 0n || status.state === "pending"
 
