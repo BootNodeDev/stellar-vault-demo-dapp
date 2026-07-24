@@ -16,6 +16,7 @@ export interface VaultState {
 	positionValue: bigint // valor de la posición del usuario, en el subyacente
 	sharePrice: number
 	isAllowed: boolean // si el usuario conectado está en el allowlist (KYC)
+	lpCount: number // cantidad de LPs con posición (holders con shares > 0)
 }
 
 export function useVault() {
@@ -25,10 +26,11 @@ export function useVault() {
 		queryKey: ["vault", address ?? "anon"],
 		refetchInterval: 8000,
 		queryFn: async () => {
-			const [totalAssets, totalSupply, symbol] = await Promise.all([
+			const [totalAssets, totalSupply, symbol, lpCount] = await Promise.all([
 				read<bigint>(vault.total_assets()),
 				read<bigint>(vault.total_supply()),
 				read<string>(vault.symbol()),
+				read<number>(vault.lp_count()),
 			])
 
 			let shares = 0n
@@ -55,6 +57,7 @@ export function useVault() {
 				positionValue,
 				sharePrice,
 				isAllowed,
+				lpCount,
 			}
 		},
 	})

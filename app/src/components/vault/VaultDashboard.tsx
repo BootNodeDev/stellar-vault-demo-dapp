@@ -29,6 +29,7 @@ export default function VaultDashboard() {
 	const sharePrice = data?.sharePrice ?? 1
 	const position = data ? toUnits(data.positionValue) : 0
 	const shares = data ? toUnits(data.shares) : 0
+	const lpCount = data?.lpCount ?? 0
 
 	return (
 		<div>
@@ -43,6 +44,9 @@ export default function VaultDashboard() {
 			<section className="stats">
 				<Stat k="Total value locked" loading={isLoading}>
 					<AnimatedNumber value={tvl} prefix="$" />
+				</Stat>
+				<Stat k="Liquidity providers" loading={isLoading}>
+					<AnimatedNumber value={lpCount} decimals={0} />
 				</Stat>
 				<Stat k="Share price" unit="USDC / bvUSDC" loading={isLoading}>
 					<AnimatedNumber value={sharePrice} decimals={4} />

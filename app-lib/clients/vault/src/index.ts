@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CDBJBS3TTHFGFSTBZQOOY5B6BRFTH35CFOTCT6DE2ZFPDMESFI6VLHKB",
+    contractId: "CD5RPBZ6JK5RHJD2JFXCGKFSD7X7HSXCZGE7NNJLOEANPJQQHS57JTGK",
   }
 } as const
 
@@ -275,6 +275,13 @@ export interface Client {
    * Removes `account` from the KYC allowlist. Owner only.
    */
   disallow: ({account}: {account: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+
+  /**
+   * Construct and simulate a lp_count transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Returns the number of addresses that currently hold vault shares
+   * (share balance > 0) — the count of active liquidity providers.
+   */
+  lp_count: (options?: MethodOptions) => Promise<AssembledTransaction<u32>>
 
   /**
    * Construct and simulate a max_mint transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -553,6 +560,7 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAAHZGVwb3NpdAAAAAAEAAAAAAAAAAZhc3NldHMAAAAAAAsAAAAAAAAACHJlY2VpdmVyAAAAEwAAAAAAAAAEZnJvbQAAABMAAAAAAAAACG9wZXJhdG9yAAAAEwAAAAEAAAAL",
         "AAAAAAAAAAAAAAAIZGVjaW1hbHMAAAAAAAAAAQAAAAQ=",
         "AAAAAAAAADVSZW1vdmVzIGBhY2NvdW50YCBmcm9tIHRoZSBLWUMgYWxsb3dsaXN0LiBPd25lciBvbmx5LgAAAAAAAAhkaXNhbGxvdwAAAAEAAAAAAAAAB2FjY291bnQAAAAAEwAAAAA=",
+        "AAAAAAAAAIFSZXR1cm5zIHRoZSBudW1iZXIgb2YgYWRkcmVzc2VzIHRoYXQgY3VycmVudGx5IGhvbGQgdmF1bHQgc2hhcmVzCihzaGFyZSBiYWxhbmNlID4gMCkg4oCUIHRoZSBjb3VudCBvZiBhY3RpdmUgbGlxdWlkaXR5IHByb3ZpZGVycy4AAAAAAAAIbHBfY291bnQAAAAAAAAAAQAAAAQ=",
         "AAAAAAAAAO5SZXR1cm5zIHRoZSBtYXhpbXVtIGFtb3VudCBvZiB2YXVsdCBzaGFyZXMgdGhhdCBjYW4gYmUgbWludGVkCmZvciB0aGUgZ2l2ZW4gcmVjZWl2ZXIgYWRkcmVzcyAoY3VycmVudGx5IGBpMTI4OjpNQVhgKS4KCiMgQXJndW1lbnRzCgoqIGBlYCAtIEFjY2VzcyB0byB0aGUgU29yb2JhbiBlbnZpcm9ubWVudC4KKiBgcmVjZWl2ZXJgIC0gVGhlIGFkZHJlc3MgdGhhdCB3b3VsZCByZWNlaXZlIHRoZSB2YXVsdCBzaGFyZXMuAAAAAAAIbWF4X21pbnQAAAABAAAAAAAAAAhyZWNlaXZlcgAAABMAAAABAAAACw==",
         "AAAAAAAAAAAAAAAIdHJhbnNmZXIAAAADAAAAAAAAAARmcm9tAAAAEwAAAAAAAAACdG8AAAAAABQAAAAAAAAABmFtb3VudAAAAAAACwAAAAA=",
         "AAAAAAAAAAAAAAAId2l0aGRyYXcAAAAEAAAAAAAAAAZhc3NldHMAAAAAAAsAAAAAAAAACHJlY2VpdmVyAAAAEwAAAAAAAAAFb3duZXIAAAAAAAATAAAAAAAAAAhvcGVyYXRvcgAAABMAAAABAAAACw==",
@@ -597,6 +605,7 @@ export class Client extends ContractClient {
         deposit: this.txFromJSON<i128>,
         decimals: this.txFromJSON<u32>,
         disallow: this.txFromJSON<null>,
+        lp_count: this.txFromJSON<u32>,
         max_mint: this.txFromJSON<i128>,
         transfer: this.txFromJSON<null>,
         withdraw: this.txFromJSON<i128>,
