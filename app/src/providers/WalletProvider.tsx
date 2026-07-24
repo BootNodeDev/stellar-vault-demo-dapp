@@ -185,6 +185,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 	const [walletId, setWalletId] = useState<string | null>(null)
 	const [isPending, startTransition] = useTransition()
 	const popupLock = useRef(false)
+	// Points at the latest updateCurrentWalletState so the 1s poller (an effect
+	// that runs once at mount) always calls the current version and compares
+	// against current state, not the stale mount-time closure.
+	const updateStateRef = useRef<() => Promise<void>>(async () => {})
 
 	const nullify = () => {
 		setAddress(undefined)
@@ -220,17 +224,16 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 	 * For "popup-always" wallets: Never calls getAddress more than once.
 	 */
 	const fetchAddress = async (
-		walletId: string,
+		_walletId: string,
 		cachedAddress: string | null,
 	): Promise<{ address: string }> => {
-		const behavior = getWalletBehavior(walletId)
-
-		if (behavior.getAddressBehavior === "popup-always") {
-			if (cachedAddress) {
-				return { address: cachedAddress }
-			}
+		// Pin the address chosen at connect time. The 1s poll must NOT re-query
+		// the wallet's active account: with several accounts in the extension
+		// that makes the dapp flicker between them. To switch accounts, reconnect
+		// (connectWallet re-reads the now-active account and overwrites storage).
+		if (cachedAddress) {
+			return { address: cachedAddress }
 		}
-
 		return wallet.getAddress()
 	}
 
@@ -311,17 +314,18 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 					setNetworkPassphrase(networkResult.networkPassphrase)
 				}
 			} catch (e) {
-				// If `getNetwork` or `getAddress` throw errors... sign the user out???
-				nullify()
-				// then log the error (instead of throwing) so we have visibility
-				// into the error while working on Scaffold Stellar but we do not
-				// crash the app process
+				// A transient getAddress/getNetwork failure (RPC hiccup, extension
+				// busy) must NOT disconnect a connected wallet. Keep the pinned
+				// state and just log. Real disconnects clear walletId via
+				// disconnectWallet and are handled by the !storedWalletId branch.
 				console.error(e)
 			} finally {
 				popupLock.current = false
 			}
 		}
 	}
+
+	updateStateRef.current = updateCurrentWalletState
 
 	useEffect(() => {
 		let timer: NodeJS.Timeout
@@ -331,7 +335,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 		const pollWalletState = async () => {
 			if (!isMounted) return
 
-			await updateCurrentWalletState()
+			await updateStateRef.current()
 
 			if (isMounted) {
 				timer = setTimeout(() => void pollWalletState(), POLL_INTERVAL)
@@ -340,7 +344,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
 		// Get the wallet address when the component is mounted for the first time
 		startTransition(async () => {
-			await updateCurrentWalletState()
+			await updateStateRef.current()
 			// Start polling after initial state is loaded
 
 			if (isMounted) {
@@ -353,7 +357,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 			isMounted = false
 			if (timer) clearTimeout(timer)
 		}
-	}, []) // eslint-disable-line react-hooks/exhaustive-deps -- it SHOULD only run once per component mount
+	}, []) // mount-once poller; the latest state is reached via updateStateRef
 
 	// Get wallet warnings based on current wallet
 	const walletWarnings = useMemo(() => getWalletWarnings(walletId), [walletId])
