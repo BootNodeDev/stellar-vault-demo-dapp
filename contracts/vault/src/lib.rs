@@ -9,12 +9,29 @@ use stellar_tokens::{
     vault::{FungibleVault, Vault},
 };
 
+#[cfg(test)]
+mod test;
+
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]
 pub enum VaultError {
     /// A gated operation involved an account that is not on the allowlist.
     NotAllowed = 1,
+}
+
+// Ledgers close roughly every 5s (~17280/day). Instance storage holds the
+// asset, decimals, metadata and owner; OZ bumps the balance/allowance tiers,
+// but the contract must extend its own instance entries.
+const INSTANCE_TTL_THRESHOLD: u32 = 518_400; // ~30 days
+const INSTANCE_TTL_EXTEND_TO: u32 = 1_036_800; // ~60 days
+
+/// Extends the TTL of the contract's instance storage so it does not expire
+/// while the vault is in active use. Called from every mutating entrypoint.
+fn extend_instance_ttl(e: &Env) {
+    e.storage()
+        .instance()
+        .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_EXTEND_TO);
 }
 
 #[contract]
@@ -40,12 +57,14 @@ impl VaultContract {
     /// Adds `account` to the KYC allowlist. Owner only.
     #[only_owner]
     pub fn allow(e: &Env, account: Address) {
+        extend_instance_ttl(e);
         AllowList::allow_user(e, &account);
     }
 
     /// Removes `account` from the KYC allowlist. Owner only.
     #[only_owner]
     pub fn disallow(e: &Env, account: Address) {
+        extend_instance_ttl(e);
         AllowList::disallow_user(e, &account);
     }
 
@@ -87,21 +106,30 @@ impl FungibleToken for VaultContract {
 impl FungibleVault for VaultContract {
     // KYC gate: the share recipient must be allowlisted before delegating.
     fn deposit(e: &Env, assets: i128, receiver: Address, from: Address, operator: Address) -> i128 {
+        extend_instance_ttl(e);
         if !AllowList::allowed(e, &receiver) {
             panic_with_error!(e, VaultError::NotAllowed);
         }
         Vault::deposit(e, assets, receiver, from, operator)
     }
 
+    // KYC gate: `mint` is the sibling of `deposit` (both create shares for a
+    // receiver), so it needs the same allowlist check to close the bypass.
     fn mint(e: &Env, shares: i128, receiver: Address, from: Address, operator: Address) -> i128 {
+        extend_instance_ttl(e);
+        if !AllowList::allowed(e, &receiver) {
+            panic_with_error!(e, VaultError::NotAllowed);
+        }
         Vault::mint(e, shares, receiver, from, operator)
     }
 
     fn withdraw(e: &Env, assets: i128, receiver: Address, owner: Address, operator: Address) -> i128 {
+        extend_instance_ttl(e);
         Vault::withdraw(e, assets, receiver, owner, operator)
     }
 
     fn redeem(e: &Env, shares: i128, receiver: Address, owner: Address, operator: Address) -> i128 {
+        extend_instance_ttl(e);
         Vault::redeem(e, shares, receiver, owner, operator)
     }
 }
