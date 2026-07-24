@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { useAccountSigners } from "../hooks/useAccountSigners"
 import { useIsAdmin } from "../hooks/useIsAdmin"
 import { useWallet } from "../hooks/useWallet"
+import { decodeAdminLink, encodeAdminLink } from "../lib/adminLink"
 import {
 	buildAdminTx,
 	describeAdminTx,
@@ -13,7 +14,6 @@ import {
 	type AdminOp,
 	type AdminTxSummary,
 } from "../lib/adminTx"
-import { decodeAdminLink, encodeAdminLink } from "../lib/sep7"
 import { computeCollected } from "../lib/threshold"
 import { mergeSignatures } from "../lib/txSignatures"
 

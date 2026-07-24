@@ -13,6 +13,7 @@ import { useState } from "react"
 import { AnimatedNumber } from "@/components/AnimatedNumber"
 import { useIsAllowed, useVault } from "@/hooks/useVault"
 import { useWallet } from "@/hooks/useWallet"
+import { formatTxError } from "@/lib/errors"
 import { parseAmount, toUnits } from "@/lib/format"
 import { vault } from "@/lib/vaultClient"
 
@@ -154,7 +155,13 @@ function PosRow({ k, v }: { k: string; v: string }) {
 type Status = { state: "idle" | "pending" | "success" | "error"; msg?: string }
 
 function ActionPanel() {
-	const { address, balances, signTransaction, updateBalances } = useWallet()
+	const {
+		address,
+		balances,
+		networkPassphrase: walletNetworkPassphrase,
+		signTransaction,
+		updateBalances,
+	} = useWallet()
 	const { data } = useVault()
 	const { data: allowed } = useIsAllowed()
 	const qc = useQueryClient()
@@ -162,6 +169,7 @@ function ActionPanel() {
 	const [tab, setTab] = useState<"deposit" | "withdraw">("deposit")
 	const [amount, setAmount] = useState("")
 	const [status, setStatus] = useState<Status>({ state: "idle" })
+	const [txHash, setTxHash] = useState<string | null>(null)
 
 	const usdcLine = balances?.[USDC_KEY]
 	const hasTrust = !!usdcLine
@@ -178,10 +186,14 @@ function ActionPanel() {
 	const available = tab === "deposit" ? usdcBal : shareBal
 	const isAllowed = allowed ?? false
 	const kycBlocked = tab === "deposit" && !isAllowed
-	const disabled = !address || parsed <= 0n || status.state === "pending"
+	const networkMismatch =
+		Boolean(walletNetworkPassphrase) &&
+		walletNetworkPassphrase !== networkPassphrase
+	const disabled =
+		!address || parsed <= 0n || status.state === "pending" || networkMismatch
 
 	async function enableUsdc() {
-		if (!address) return
+		if (!address || networkMismatch) return
 		try {
 			setStatus({
 				state: "pending",
@@ -218,13 +230,13 @@ function ActionPanel() {
 		} catch (e) {
 			setStatus({
 				state: "error",
-				msg: e instanceof Error ? e.message : "Could not enable USDC",
+				msg: formatTxError(e, "Could not enable USDC"),
 			})
 		}
 	}
 
 	async function submit() {
-		if (!address) return
+		if (!address || networkMismatch) return
 		try {
 			setStatus({
 				state: "pending",
@@ -255,6 +267,11 @@ function ActionPanel() {
 			if ((sent as { result?: { isErr?: () => boolean } }).result?.isErr?.()) {
 				throw new Error("Transaction reverted on-chain")
 			}
+			setTxHash(
+				sent.sendTransactionResponse?.hash ??
+					sent.getTransactionResponse?.txHash ??
+					null,
+			)
 			setStatus({
 				state: "success",
 				msg:
@@ -268,10 +285,7 @@ function ActionPanel() {
 				updateBalances(),
 			])
 		} catch (e) {
-			setStatus({
-				state: "error",
-				msg: e instanceof Error ? e.message : "Something went wrong",
-			})
+			setStatus({ state: "error", msg: formatTxError(e) })
 		}
 	}
 
@@ -298,10 +312,11 @@ function ActionPanel() {
 					Your wallet hasn&apos;t opted into USDC yet. Establish the trustline
 					once (a standard Stellar opt-in), then mint test USDC and deposit.
 				</p>
+				{networkMismatch && <NetworkMismatchBanner />}
 				<button
 					className="btn"
 					onClick={enableUsdc}
-					disabled={status.state === "pending"}
+					disabled={status.state === "pending" || networkMismatch}
 				>
 					{status.state === "pending" && (
 						<CircleNotch size={17} className="spin" />
@@ -328,6 +343,7 @@ function ActionPanel() {
 					onClick={() => {
 						setTab("deposit")
 						setStatus({ state: "idle" })
+						setTxHash(null)
 					}}
 				>
 					<ArrowLineDown size={16} /> Deposit
@@ -337,11 +353,14 @@ function ActionPanel() {
 					onClick={() => {
 						setTab("withdraw")
 						setStatus({ state: "idle" })
+						setTxHash(null)
 					}}
 				>
 					<ArrowLineUp size={16} /> Withdraw
 				</button>
 			</div>
+
+			{networkMismatch && <NetworkMismatchBanner />}
 
 			{kycBlocked ? (
 				<>
@@ -369,6 +388,7 @@ function ActionPanel() {
 							onChange={(e) => {
 								setAmount(e.target.value.replace(/[^0-9.]/g, ""))
 								setStatus({ state: "idle" })
+								setTxHash(null)
 							}}
 						/>
 						<span className="u">{tab === "deposit" ? "USDC" : "bvUSDC"}</span>
@@ -407,6 +427,9 @@ function ActionPanel() {
 					{status.state === "success" && (
 						<div className="status status--success">{status.msg}</div>
 					)}
+					{status.state === "success" && txHash && (
+						<TxExplorerLink hash={txHash} />
+					)}
 					{status.state === "error" && (
 						<div className="status status--error">{status.msg}</div>
 					)}
@@ -423,6 +446,30 @@ function FaucetLink() {
 		<a className="faucet" href={FAUCET} target="_blank" rel="noreferrer">
 			Need test USDC? Mint from Circle&apos;s faucet — pick Stellar{" "}
 			<ArrowUpRight size={14} />
+		</a>
+	)
+}
+
+function NetworkMismatchBanner() {
+	return (
+		<div className="status status--error">
+			Your wallet is on a different network than this app. Switch networks to
+			continue.
+		</div>
+	)
+}
+
+function TxExplorerLink({ hash }: { hash: string }) {
+	const net =
+		networkPassphrase === StellarSdk.Networks.PUBLIC ? "public" : "testnet"
+	return (
+		<a
+			className="btn"
+			href={`https://stellar.expert/explorer/${net}/tx/${hash}`}
+			target="_blank"
+			rel="noreferrer"
+		>
+			View on explorer
 		</a>
 	)
 }

@@ -19,7 +19,7 @@ regenerating the client, use `npx vite` instead of `npm run dev`.
 
 ## Tests
 
-- **`src/lib/*.test.ts`** (vitest) — the pure logic: SEP-7 link codec, multisig threshold-weight
+- **`src/lib/*.test.ts`** (vitest) — the pure logic: admin-link codec, multisig threshold-weight
   math, signature merge. These are the only unit-tested pieces (no I/O, no DOM).
 - Contract tests live at the repo root: `cargo test -p vault`.
 - The presentational components and rpc/wallet I/O are covered manually / by the round-trip
@@ -32,7 +32,7 @@ regenerating the client, use `npx vite` instead of `npm run dev`.
   count, share price, position, Deposit/Withdraw; deposit is KYC-gated).
 - **`hooks/`** — `useWallet` (wallet context), `useVault` (contract reads), `useAccountSigners`
   (gov signers/thresholds from Horizon), `useIsAdmin` (is the connected wallet a gov signer).
-- **`lib/`** — `sep7` / `threshold` / `txSignatures` (pure, unit-tested), `adminTx` (rpc I/O:
+- **`lib/`** — `adminLink` / `threshold` / `txSignatures` (pure, unit-tested), `adminTx` (rpc I/O:
   build → simulate → assemble → submit+poll), `adminConfig` (pinned vault + gov ids), `format`.
 - **`providers/WalletProvider.tsx`** — polls the wallet; pins the account chosen at connect (does
   NOT follow the wallet's active account, to avoid flicker with multiple accounts).
@@ -44,7 +44,7 @@ app-lib/clients/vault --overwrite`, then rebuild it (`npm run build -w vault` fr
 ## Routes
 
 - `/` — vault dashboard.
-- `/admin` — multisig allowlist console (compose → collect SEP-7 signatures → submit). Nav entry
+- `/admin` — multisig allowlist console (compose → collect signatures via admin links → submit). Nav entry
   and page are gated to gov signers via `useIsAdmin`; this is a UI gate only — real authority is
   on-chain (`require_auth` against gov's thresholds).
 

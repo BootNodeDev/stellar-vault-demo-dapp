@@ -1,3 +1,5 @@
+// These ids are testnet-pinned; a mainnet target would need a network-keyed lookup.
+//
 // Vault deployment whose source_account is the gov multisig (2-of-3,
 // med_threshold=2). The admin page only ever targets this contract — pinned
 // here so adminTx.ts, and any test/tooling, reference one source of truth

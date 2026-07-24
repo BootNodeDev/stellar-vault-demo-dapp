@@ -37,10 +37,6 @@ function server(): rpc.Server {
 	return new rpc.Server(rpcUrl)
 }
 
-function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
 /**
  * Builds an `allow`/`disallow` invoke with the gov account as source, then
  * simulates and assembles it via RPC. Returns unsigned XDR — no signing
@@ -123,18 +119,19 @@ export async function submitAdminTx(xdr: string): Promise<string> {
 		throw new Error("Network is busy — submit again in a moment")
 	}
 
-	for (let attempt = 0; attempt < SUBMIT_POLL_ATTEMPTS; attempt++) {
-		const got = await srv.getTransaction(sent.hash)
-		if (got.status === rpc.Api.GetTransactionStatus.SUCCESS) {
-			return sent.hash
-		}
-		if (got.status === rpc.Api.GetTransactionStatus.FAILED) {
-			throw new Error(
-				"Transaction failed on-chain — the allowlist was not updated",
-			)
-		}
-		await delay(SUBMIT_POLL_INTERVAL_MS)
+	const got = await srv.pollTransaction(sent.hash, {
+		attempts: SUBMIT_POLL_ATTEMPTS,
+		sleepStrategy: () => SUBMIT_POLL_INTERVAL_MS,
+	})
+	if (got.status === rpc.Api.GetTransactionStatus.SUCCESS) {
+		return sent.hash
 	}
+	if (got.status === rpc.Api.GetTransactionStatus.FAILED) {
+		throw new Error(
+			"Transaction failed on-chain — the allowlist was not updated",
+		)
+	}
+	// pollTransaction returns the last (NOT_FOUND) response once attempts run out.
 	throw new Error(
 		"Timed out waiting for confirmation — check the explorer before retrying",
 	)

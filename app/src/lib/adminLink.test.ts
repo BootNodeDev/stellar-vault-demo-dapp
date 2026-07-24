@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { decodeAdminLink, encodeAdminLink } from "./sep7"
+import { decodeAdminLink, encodeAdminLink } from "./adminLink"
 
 const SAMPLE_XDR =
 	"AAAAAgAAAAAvzHl1JiP4hyx1TjLo7/pLGVCM9BWH8yUj9GwzSU3EbwAAAGQAAAAAAAAAAQAAAAEAAAAA"

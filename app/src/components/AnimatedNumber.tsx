@@ -10,7 +10,12 @@ interface Props {
 
 // Tween the figure only when the underlying data CHANGES — not a page-load
 // count-up. First render shows the real value instantly.
-export function AnimatedNumber({ value, decimals = 2, prefix = "", suffix = "" }: Props) {
+export function AnimatedNumber({
+	value,
+	decimals = 2,
+	prefix = "",
+	suffix = "",
+}: Props) {
 	const reduce = useReducedMotion()
 	const mv = useMotionValue(value)
 	const [display, setDisplay] = useState(value)
@@ -26,7 +31,10 @@ export function AnimatedNumber({ value, decimals = 2, prefix = "", suffix = "" }
 			setDisplay(value)
 			return
 		}
-		const controls = animate(mv, value, { duration: 0.35, ease: [0.16, 1, 0.3, 1] })
+		const controls = animate(mv, value, {
+			duration: 0.35,
+			ease: [0.16, 1, 0.3, 1],
+		})
 		const unsub = mv.on("change", (v) => setDisplay(v))
 		return () => {
 			controls.stop()

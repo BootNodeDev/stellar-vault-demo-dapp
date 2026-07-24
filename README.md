@@ -15,8 +15,9 @@ on-chain. Built on the OpenZeppelin Soroban vault, with a React + Freighter dApp
 - **KYC allowlist** — `deposit`, `mint` and `transfer` require the receiving/sending parties to
   be allowlisted; exits (`withdraw` / `redeem`) stay open so a de-listed holder can still exit.
 - **Multisig governance** — the owner is a native 2-of-3 Stellar account; `allow` / `disallow` are
-  authorized by quorum. Signatures are collected off-chain by passing **SEP-7 links** between
-  signers (no backend), then submitted once the medium threshold is met.
+  authorized by quorum. Signatures are collected off-chain by passing **admin links** (a custom
+  `#tx=` hash-fragment transport) between signers (no backend), then submitted once the medium
+  threshold is met.
 - **Dashboard** — TVL, live **LP count** (on-chain holder counter), share price, your position,
   Deposit / Withdraw. The deposit form is gated by the allowlist; the `/admin` console is visible
   only to gov signers.
@@ -35,7 +36,7 @@ on-chain. Built on the OpenZeppelin Soroban vault, with a React + Freighter dApp
 contracts/vault      # the vault: deposit/withdraw/mint/redeem, KYC allowlist, LP counter
 contracts/counter    # throwaway learning contract
 app/                 # Vite + React frontend (dashboard + /admin signing console)
-app/src/lib/         # pure logic: SEP-7 codec, threshold math, signature merge (unit-tested)
+app/src/lib/         # pure logic: admin-link codec, threshold math, signature merge (unit-tested)
 app-lib/             # scaffold runtime + generated TS contract clients
 environments.toml    # scaffold deploy config (network, accounts, contracts)
 ```

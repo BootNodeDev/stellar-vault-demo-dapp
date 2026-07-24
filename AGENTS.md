@@ -16,7 +16,7 @@ LP count (holders with shares > 0). Runs on Stellar **testnet**.
 
 - `contracts/vault` — the vault contract (ERC-4626-equivalent). Underlying = USDC via its SAC; shares = `bvUSDC` (7 decimals).
 - `contracts/counter` — throwaway learning contract.
-- `app/` — Vite + React + TypeScript frontend (vault dashboard + `/admin` allowlist console with SEP-7 multisig signing).
+- `app/` — Vite + React + TypeScript frontend (vault dashboard + `/admin` allowlist console with multisig signing).
 - `app-lib/` — Scaffold Stellar runtime + generated contract clients.
 - `environments.toml` — Scaffold Stellar deploy config (networks, accounts, contracts).
 

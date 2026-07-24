@@ -24,6 +24,7 @@ export function useVault() {
 	return useQuery<VaultState>({
 		queryKey: ["vault", address ?? "anon"],
 		refetchInterval: 8000,
+		refetchIntervalInBackground: false,
 		// Keep the last good data during refetch / transient RPC errors so the
 		// dashboard doesn't flash to empty when a read hiccups (the public testnet
 		// RPC throttles under load).
@@ -73,6 +74,7 @@ export function useIsAllowed() {
 		queryKey: ["is-allowed", address ?? "anon"],
 		enabled: !!address,
 		refetchInterval: 8000,
+		refetchIntervalInBackground: false,
 		retry: 2,
 		placeholderData: keepPreviousData,
 		queryFn: async () => {

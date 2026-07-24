@@ -1,6 +1,7 @@
 // Transport for the admin flow: a signed/unsigned transaction envelope travels
 // as a base64url payload in the app's own `#tx=` hash fragment — copy-paste and
-// back-button friendly, no server involved. The fragment is untrusted input, so
+// back-button friendly, no server involved. This is a bespoke hash-fragment
+// transport, NOT a SEP-7 `web+stellar:` URI. The fragment is untrusted input, so
 // decoding validates strictly and never attempts a partial/garbled result.
 
 const BASE64_URL_CHARS = /^[A-Za-z0-9_-]+$/
