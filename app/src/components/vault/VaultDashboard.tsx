@@ -21,8 +21,11 @@ const USDC_ISSUER = "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5"
 const USDC_KEY = `USDC:${USDC_ISSUER}`
 
 export default function VaultDashboard() {
-	const { data, isLoading } = useVault()
+	const { data } = useVault()
 	const { address } = useWallet()
+	// Skeleton only on the very first load (no data yet), never on background
+	// refetches — otherwise the dashboard flashes the skeleton on every poll.
+	const isLoading = !data
 
 	const tvl = data ? toUnits(data.totalAssets) : 0
 	const supply = data ? toUnits(data.totalSupply) : 0
