@@ -9,7 +9,8 @@ Soroban vault) plus a React + Freighter dApp. Learning-grade PoC ("mini-Ballast"
 LPs deposit USDC and receive `bvUSDC` shares that track the vault's NAV, redeemable
 on-chain. No yield accrual (shares stay 1:1); the owner cannot withdraw LP funds. A KYC
 allowlist gates entry (`deposit`/`mint`) and share transfers; the owner is a 2-of-3
-multisig (compliance) that manages the allowlist. Runs on Stellar **testnet**.
+multisig (compliance) that manages the allowlist. The contract also tracks the current
+LP count (holders with shares > 0). Runs on Stellar **testnet**.
 
 ## Layout
 
@@ -40,7 +41,7 @@ The scaffold default is a local network (`localhost:8000`). Set both to testnet 
 
 ## Deployed (testnet)
 
-- Vault (owner = gov multisig): `CDBJBS3TTHFGFSTBZQOOY5B6BRFTH35CFOTCT6DE2ZFPDMESFI6VLHKB`
+- Vault (owner = gov multisig): `CD5RPBZ6JK5RHJD2JFXCGKFSD7X7HSXCZGE7NNJLOEANPJQQHS57JTGK`
 - Gov multisig (2-of-3, owner / compliance admin): `GDVL4VKURSZ7R66IWAORMUNHYHHDQ5Y65TMPWIGV6WDVKTRZZLQBYNXQ`
 - USDC (Circle testnet): issuer `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`,
   SAC `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA`
