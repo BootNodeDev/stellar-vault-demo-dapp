@@ -1,6 +1,7 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contracterror, contractimpl, panic_with_error, Address, Env, MuxedAddress, String,
+    contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Env,
+    MuxedAddress, String,
 };
 use stellar_access::ownable::set_owner;
 use stellar_macros::only_owner;
@@ -32,6 +33,31 @@ fn extend_instance_ttl(e: &Env) {
     e.storage()
         .instance()
         .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_EXTEND_TO);
+}
+
+/// Instance-storage keys owned by this contract (distinct from OZ's own keys).
+#[contracttype]
+enum DataKey {
+    /// Count of addresses that currently hold a non-zero share balance.
+    LpCount,
+}
+
+fn lp_count_read(e: &Env) -> u32 {
+    e.storage().instance().get(&DataKey::LpCount).unwrap_or(0)
+}
+
+/// Applies one share-balance transition to the LP counter: a 0 -> >0 crossing
+/// increments, a >0 -> 0 crossing decrements, anything else leaves it alone.
+fn apply_lp_transition(e: &Env, before: i128, after: i128) {
+    let count = lp_count_read(e);
+    let updated = if before == 0 && after > 0 {
+        count + 1
+    } else if before > 0 && after == 0 {
+        count - 1
+    } else {
+        return;
+    };
+    e.storage().instance().set(&DataKey::LpCount, &updated);
 }
 
 #[contract]
@@ -72,6 +98,12 @@ impl VaultContract {
     pub fn is_allowed(e: &Env, account: Address) -> bool {
         AllowList::allowed(e, &account)
     }
+
+    /// Returns the number of addresses that currently hold vault shares
+    /// (share balance > 0) — the count of active liquidity providers.
+    pub fn lp_count(e: &Env) -> u32 {
+        lp_count_read(e)
+    }
 }
 
 // The vault IS the shares token: it delegates balance/transfer/total_supply to OZ's `Vault` type.
@@ -85,17 +117,26 @@ impl FungibleToken for VaultContract {
 
     // KYC gate: both sender and recipient must be allowlisted before delegating.
     fn transfer(e: &Env, from: Address, to: MuxedAddress, amount: i128) {
-        if !AllowList::allowed(e, &from) || !AllowList::allowed(e, &to.address()) {
+        let to_address = to.address();
+        if !AllowList::allowed(e, &from) || !AllowList::allowed(e, &to_address) {
             panic_with_error!(e, VaultError::NotAllowed);
         }
+        let from_before = Base::balance(e, &from);
+        let to_before = Base::balance(e, &to_address);
         Vault::transfer(e, &from, &to, amount);
+        apply_lp_transition(e, from_before, Base::balance(e, &from));
+        apply_lp_transition(e, to_before, Base::balance(e, &to_address));
     }
 
     fn transfer_from(e: &Env, spender: Address, from: Address, to: Address, amount: i128) {
         if !AllowList::allowed(e, &from) || !AllowList::allowed(e, &to) {
             panic_with_error!(e, VaultError::NotAllowed);
         }
+        let from_before = Base::balance(e, &from);
+        let to_before = Base::balance(e, &to);
         Vault::transfer_from(e, &spender, &from, &to, amount);
+        apply_lp_transition(e, from_before, Base::balance(e, &from));
+        apply_lp_transition(e, to_before, Base::balance(e, &to));
     }
 }
 
@@ -106,30 +147,42 @@ impl FungibleToken for VaultContract {
 impl FungibleVault for VaultContract {
     // KYC gate: the share recipient must be allowlisted before delegating.
     fn deposit(e: &Env, assets: i128, receiver: Address, from: Address, operator: Address) -> i128 {
-        extend_instance_ttl(e);
         if !AllowList::allowed(e, &receiver) {
             panic_with_error!(e, VaultError::NotAllowed);
         }
-        Vault::deposit(e, assets, receiver, from, operator)
+        extend_instance_ttl(e);
+        let before = Base::balance(e, &receiver);
+        let shares = Vault::deposit(e, assets, receiver.clone(), from, operator);
+        apply_lp_transition(e, before, Base::balance(e, &receiver));
+        shares
     }
 
     // KYC gate: `mint` is the sibling of `deposit` (both create shares for a
     // receiver), so it needs the same allowlist check to close the bypass.
     fn mint(e: &Env, shares: i128, receiver: Address, from: Address, operator: Address) -> i128 {
-        extend_instance_ttl(e);
         if !AllowList::allowed(e, &receiver) {
             panic_with_error!(e, VaultError::NotAllowed);
         }
-        Vault::mint(e, shares, receiver, from, operator)
+        extend_instance_ttl(e);
+        let before = Base::balance(e, &receiver);
+        let assets = Vault::mint(e, shares, receiver.clone(), from, operator);
+        apply_lp_transition(e, before, Base::balance(e, &receiver));
+        assets
     }
 
     fn withdraw(e: &Env, assets: i128, receiver: Address, owner: Address, operator: Address) -> i128 {
         extend_instance_ttl(e);
-        Vault::withdraw(e, assets, receiver, owner, operator)
+        let before = Base::balance(e, &owner);
+        let shares = Vault::withdraw(e, assets, receiver, owner.clone(), operator);
+        apply_lp_transition(e, before, Base::balance(e, &owner));
+        shares
     }
 
     fn redeem(e: &Env, shares: i128, receiver: Address, owner: Address, operator: Address) -> i128 {
         extend_instance_ttl(e);
-        Vault::redeem(e, shares, receiver, owner, operator)
+        let before = Base::balance(e, &owner);
+        let assets = Vault::redeem(e, shares, receiver, owner.clone(), operator);
+        apply_lp_transition(e, before, Base::balance(e, &owner));
+        assets
     }
 }

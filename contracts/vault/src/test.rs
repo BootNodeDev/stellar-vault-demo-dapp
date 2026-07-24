@@ -44,12 +44,31 @@ impl Fixture {
 
     /// Grants the depositor an allowance so the vault can pull the underlying.
     fn approve_underlying(&self, amount: i128) {
+        self.approve_for(&self.depositor, amount);
+    }
+
+    /// Mints underlying USDC to `who`.
+    fn fund(&self, who: &Address, amount: i128) {
+        StellarAssetClient::new(&self.e, &self.usdc_address).mint(who, &amount);
+    }
+
+    /// Grants `who` an allowance so the vault can pull the underlying.
+    fn approve_for(&self, who: &Address, amount: i128) {
         TokenClient::new(&self.e, &self.usdc_address).approve(
-            &self.depositor,
+            who,
             &self.vault_address,
             &amount,
             &1000,
         );
+    }
+
+    /// Allowlists, funds, approves and deposits for `who` in one shot.
+    fn onboard_depositor(&self, who: &Address, amount: i128) {
+        let vault = self.vault();
+        vault.allow(who);
+        self.fund(who, amount);
+        self.approve_for(who, amount);
+        vault.deposit(&amount, who, who, who);
     }
 }
 
@@ -181,4 +200,126 @@ fn disallow_rejects_non_owner_caller() {
     }]);
 
     vault.disallow(&account);
+}
+
+#[test]
+fn lp_count_starts_at_zero() {
+    let f = setup();
+    assert_eq!(f.vault().lp_count(), 0);
+}
+
+#[test]
+fn lp_count_increments_on_first_deposit() {
+    let f = setup();
+    let vault = f.vault();
+    vault.allow(&f.depositor);
+    f.approve_underlying(DEPOSIT_AMOUNT);
+
+    vault.deposit(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+
+    assert_eq!(vault.lp_count(), 1);
+}
+
+#[test]
+fn lp_count_unchanged_when_same_holder_deposits_again() {
+    let f = setup();
+    let vault = f.vault();
+    vault.allow(&f.depositor);
+    f.approve_underlying(DEPOSIT_AMOUNT * 2);
+
+    vault.deposit(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+    vault.deposit(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+
+    assert_eq!(vault.lp_count(), 1);
+}
+
+#[test]
+fn lp_count_increments_for_second_holder() {
+    let f = setup();
+    let vault = f.vault();
+    vault.allow(&f.depositor);
+    f.approve_underlying(DEPOSIT_AMOUNT);
+    vault.deposit(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+
+    let bob = Address::generate(&f.e);
+    f.onboard_depositor(&bob, DEPOSIT_AMOUNT);
+
+    assert_eq!(vault.lp_count(), 2);
+}
+
+#[test]
+fn lp_count_decrements_on_full_withdraw() {
+    let f = setup();
+    let vault = f.vault();
+    vault.allow(&f.depositor);
+    f.approve_underlying(DEPOSIT_AMOUNT);
+    vault.deposit(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+
+    let bob = Address::generate(&f.e);
+    f.onboard_depositor(&bob, DEPOSIT_AMOUNT);
+    assert_eq!(vault.lp_count(), 2);
+
+    vault.withdraw(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+
+    assert_eq!(vault.lp_count(), 1);
+}
+
+#[test]
+fn lp_count_unchanged_on_partial_withdraw() {
+    let f = setup();
+    let vault = f.vault();
+    vault.allow(&f.depositor);
+    f.approve_underlying(DEPOSIT_AMOUNT);
+    vault.deposit(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+    assert_eq!(vault.lp_count(), 1);
+
+    vault.withdraw(&(DEPOSIT_AMOUNT / 2), &f.depositor, &f.depositor, &f.depositor);
+
+    assert_eq!(vault.lp_count(), 1);
+}
+
+#[test]
+fn lp_count_increments_on_mint() {
+    let f = setup();
+    let vault = f.vault();
+    vault.allow(&f.depositor);
+    f.approve_underlying(DEPOSIT_AMOUNT);
+
+    vault.mint(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+
+    assert_eq!(vault.lp_count(), 1);
+}
+
+#[test]
+fn lp_count_unchanged_on_full_transfer_to_fresh_holder() {
+    let f = setup();
+    let vault = f.vault();
+    vault.allow(&f.depositor);
+    f.approve_underlying(DEPOSIT_AMOUNT);
+    vault.deposit(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+    assert_eq!(vault.lp_count(), 1);
+
+    let bob = Address::generate(&f.e);
+    vault.allow(&bob);
+
+    vault.transfer(&f.depositor, &MuxedAddress::from(&bob), &DEPOSIT_AMOUNT);
+
+    assert_eq!(vault.lp_count(), 1);
+}
+
+#[test]
+fn lp_count_decreases_on_full_transfer_to_existing_holder() {
+    let f = setup();
+    let vault = f.vault();
+    vault.allow(&f.depositor);
+    f.approve_underlying(DEPOSIT_AMOUNT);
+    vault.deposit(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+
+    let bob = Address::generate(&f.e);
+    f.onboard_depositor(&bob, DEPOSIT_AMOUNT);
+    assert_eq!(vault.lp_count(), 2);
+
+    vault.transfer(&f.depositor, &MuxedAddress::from(&bob), &DEPOSIT_AMOUNT);
+
+    assert_eq!(vault.lp_count(), 1);
 }
