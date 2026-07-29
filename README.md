@@ -6,6 +6,8 @@
 
 A minimal reinsurance-style vault on **Stellar / Soroban**. Liquidity providers deposit USDC and receive `bvUSDC` shares that track the vault's net asset value, redeemable for USDC on-chain. Built on the OpenZeppelin Soroban vault, with a React + Freighter dApp and a multisig-governed KYC allowlist.
 
+**Live demo (Stellar testnet):** <https://stellar-vault-demo-dapp-app-alpha.vercel.app>
+
 > [!NOTE]
 > Learning-grade proof of concept ("mini-Ballast") running on Stellar **testnet**. Shares stay 1:1 with the underlying (no yield accrual) and the owner cannot withdraw LP funds. It exists to explore Soroban vaults, native multisig governance, and a backend-free signature-collection flow — not for production use.
 
@@ -70,7 +72,7 @@ npm install && npm run dev      # http://localhost:5173
 
 ## Using the dApp
 
-1. Connect **Freighter**, set to **Testnet**.
+1. Open the [live demo](https://stellar-vault-demo-dapp-app-alpha.vercel.app) (or your local instance) and connect **Freighter**, set to **Testnet**.
 2. **Enable USDC** — a one-time Stellar trustline so the account can hold USDC.
 3. Mint test USDC from [Circle's faucet](https://faucet.circle.com) (select Stellar).
 4. **Get allowlisted** — deposits are KYC-gated. A governance signer must `allow` your address from the `/admin` console; until then the deposit form shows a KYC notice (withdraw stays open).
