@@ -1,8 +1,7 @@
-#![cfg(test)]
 extern crate std;
 
 use soroban_sdk::{
-    testutils::{Address as _, MockAuth, MockAuthInvoke},
+    testutils::{storage::Instance as _, Address as _, Ledger as _, MockAuth, MockAuthInvoke},
     token::{StellarAssetClient, TokenClient},
     Address, Env, IntoVal, MuxedAddress,
 };
@@ -70,6 +69,20 @@ impl Fixture {
         self.approve_for(who, amount);
         vault.deposit(&amount, who, who, who);
     }
+
+    /// Reads the vault's own instance-storage TTL (ledgers remaining).
+    fn instance_ttl(&self) -> u32 {
+        self.e
+            .as_contract(&self.vault_address, || self.e.storage().instance().get_ttl())
+    }
+
+    /// Advances the ledger sequence so the instance TTL drops below
+    /// `INSTANCE_TTL_THRESHOLD`, forcing the next `extend_instance_ttl` call
+    /// to actually bump it (a no-op above threshold would hide a missing call).
+    fn age_ledger_below_ttl_threshold(&self) {
+        let advance = crate::INSTANCE_TTL_EXTEND_TO - crate::INSTANCE_TTL_THRESHOLD + 1;
+        self.e.ledger().with_mut(|l| l.sequence_number += advance);
+    }
 }
 
 #[test]
@@ -124,7 +137,7 @@ fn transfer_reverts_when_recipient_not_allowlisted() {
     vault.allow(&f.depositor);
     let recipient = Address::generate(&f.e);
 
-    vault.transfer(&f.depositor, &MuxedAddress::from(&recipient), &1);
+    vault.transfer(&f.depositor, MuxedAddress::from(&recipient), &1);
 }
 
 #[test]
@@ -135,7 +148,7 @@ fn transfer_reverts_when_sender_not_allowlisted() {
     let recipient = Address::generate(&f.e);
     vault.allow(&recipient);
 
-    vault.transfer(&f.depositor, &MuxedAddress::from(&recipient), &1);
+    vault.transfer(&f.depositor, MuxedAddress::from(&recipient), &1);
 }
 
 #[test]
@@ -302,7 +315,7 @@ fn lp_count_unchanged_on_full_transfer_to_fresh_holder() {
     let bob = Address::generate(&f.e);
     vault.allow(&bob);
 
-    vault.transfer(&f.depositor, &MuxedAddress::from(&bob), &DEPOSIT_AMOUNT);
+    vault.transfer(&f.depositor, MuxedAddress::from(&bob), &DEPOSIT_AMOUNT);
 
     assert_eq!(vault.lp_count(), 1);
 }
@@ -319,7 +332,47 @@ fn lp_count_decreases_on_full_transfer_to_existing_holder() {
     f.onboard_depositor(&bob, DEPOSIT_AMOUNT);
     assert_eq!(vault.lp_count(), 2);
 
-    vault.transfer(&f.depositor, &MuxedAddress::from(&bob), &DEPOSIT_AMOUNT);
+    vault.transfer(&f.depositor, MuxedAddress::from(&bob), &DEPOSIT_AMOUNT);
 
     assert_eq!(vault.lp_count(), 1);
+}
+
+#[test]
+fn transfer_extends_instance_ttl() {
+    let f = setup();
+    let vault = f.vault();
+    vault.allow(&f.depositor);
+    f.approve_underlying(DEPOSIT_AMOUNT);
+    vault.deposit(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+
+    let recipient = Address::generate(&f.e);
+    vault.allow(&recipient);
+
+    f.age_ledger_below_ttl_threshold();
+    assert!(f.instance_ttl() < crate::INSTANCE_TTL_THRESHOLD);
+
+    vault.transfer(&f.depositor, MuxedAddress::from(&recipient), &1);
+
+    assert!(f.instance_ttl() >= crate::INSTANCE_TTL_EXTEND_TO - 1);
+}
+
+#[test]
+fn transfer_from_extends_instance_ttl() {
+    let f = setup();
+    let vault = f.vault();
+    vault.allow(&f.depositor);
+    f.approve_underlying(DEPOSIT_AMOUNT);
+    vault.deposit(&DEPOSIT_AMOUNT, &f.depositor, &f.depositor, &f.depositor);
+
+    let recipient = Address::generate(&f.e);
+    vault.allow(&recipient);
+
+    f.age_ledger_below_ttl_threshold();
+    let spender = Address::generate(&f.e);
+    vault.approve(&f.depositor, &spender, &DEPOSIT_AMOUNT, &(f.e.ledger().sequence() + 1000));
+    assert!(f.instance_ttl() < crate::INSTANCE_TTL_THRESHOLD);
+
+    vault.transfer_from(&spender, &f.depositor, &recipient, &1);
+
+    assert!(f.instance_ttl() >= crate::INSTANCE_TTL_EXTEND_TO - 1);
 }

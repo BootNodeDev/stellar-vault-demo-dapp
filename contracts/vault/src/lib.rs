@@ -21,14 +21,15 @@ pub enum VaultError {
     NotAllowed = 1,
 }
 
-// Ledgers close roughly every 5s (~17280/day). Instance storage holds the
-// asset, decimals, metadata and owner; OZ bumps the balance/allowance tiers,
-// but the contract must extend its own instance entries.
+// Instance storage holds the asset, decimals, metadata and owner; OZ bumps
+// the balance/allowance tiers, but the contract must extend its own instance
+// entries.
 const INSTANCE_TTL_THRESHOLD: u32 = 518_400; // ~30 days
 const INSTANCE_TTL_EXTEND_TO: u32 = 1_036_800; // ~60 days
 
 /// Extends the TTL of the contract's instance storage so it does not expire
-/// while the vault is in active use. Called from every mutating entrypoint.
+/// while the vault is in active use. Call from every entrypoint that writes
+/// instance storage.
 fn extend_instance_ttl(e: &Env) {
     e.storage()
         .instance()
@@ -46,8 +47,7 @@ fn lp_count_read(e: &Env) -> u32 {
     e.storage().instance().get(&DataKey::LpCount).unwrap_or(0)
 }
 
-/// Applies one share-balance transition to the LP counter: a 0 -> >0 crossing
-/// increments, a >0 -> 0 crossing decrements, anything else leaves it alone.
+/// Updates the LP counter when a share balance crosses zero in either direction.
 fn apply_lp_transition(e: &Env, before: i128, after: i128) {
     let count = lp_count_read(e);
     let updated = if before == 0 && after > 0 {
@@ -115,8 +115,8 @@ impl FungibleToken for VaultContract {
         Vault::decimals(e)
     }
 
-    // KYC gate: both sender and recipient must be allowlisted before delegating.
     fn transfer(e: &Env, from: Address, to: MuxedAddress, amount: i128) {
+        extend_instance_ttl(e);
         let to_address = to.address();
         if !AllowList::allowed(e, &from) || !AllowList::allowed(e, &to_address) {
             panic_with_error!(e, VaultError::NotAllowed);
@@ -129,6 +129,7 @@ impl FungibleToken for VaultContract {
     }
 
     fn transfer_from(e: &Env, spender: Address, from: Address, to: Address, amount: i128) {
+        extend_instance_ttl(e);
         if !AllowList::allowed(e, &from) || !AllowList::allowed(e, &to) {
             panic_with_error!(e, VaultError::NotAllowed);
         }
@@ -145,7 +146,6 @@ impl FungibleToken for VaultContract {
 // them explicit; `Vault` already handles authorization internally (we do not repeat it).
 #[contractimpl(contracttrait)]
 impl FungibleVault for VaultContract {
-    // KYC gate: the share recipient must be allowlisted before delegating.
     fn deposit(e: &Env, assets: i128, receiver: Address, from: Address, operator: Address) -> i128 {
         if !AllowList::allowed(e, &receiver) {
             panic_with_error!(e, VaultError::NotAllowed);
@@ -157,8 +157,8 @@ impl FungibleVault for VaultContract {
         shares
     }
 
-    // KYC gate: `mint` is the sibling of `deposit` (both create shares for a
-    // receiver), so it needs the same allowlist check to close the bypass.
+    // `mint` mirrors `deposit` in creating shares for a receiver, so it needs
+    // the same allowlist check to close the bypass.
     fn mint(e: &Env, shares: i128, receiver: Address, from: Address, operator: Address) -> i128 {
         if !AllowList::allowed(e, &receiver) {
             panic_with_error!(e, VaultError::NotAllowed);
