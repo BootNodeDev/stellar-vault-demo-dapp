@@ -211,6 +211,7 @@ function SignView({ hash }: { hash: string }) {
 	if (!summary || !xdr) {
 		return <p className="muted">Reading transaction…</p>
 	}
+	const currentXdr = xdr
 
 	if (submittedHash) {
 		const net =
@@ -278,12 +279,12 @@ function SignView({ hash }: { hash: string }) {
 				state: "pending",
 				msg: "Confirm the signature in your wallet",
 			})
-			const { signedTxXdr } = await signTransaction(xdr as string, {
+			const { signedTxXdr } = await signTransaction(currentXdr, {
 				networkPassphrase,
 				address,
 			})
 			const merged = mergeSignatures(
-				xdr as string,
+				currentXdr,
 				signedTxXdr,
 				networkPassphrase,
 			)
@@ -308,7 +309,7 @@ function SignView({ hash }: { hash: string }) {
 				state: "pending",
 				msg: "Submitting and waiting for on-chain confirmation…",
 			})
-			const hash = await submitAdminTx(xdr as string)
+			const hash = await submitAdminTx(currentXdr)
 			setSubmittedHash(hash)
 			setStatus({ state: "success", msg: "Confirmed — allowlist updated" })
 		} catch (e) {
