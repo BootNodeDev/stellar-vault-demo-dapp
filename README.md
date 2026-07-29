@@ -4,7 +4,7 @@
 [![Network: Stellar Testnet](https://img.shields.io/badge/network-Stellar%20testnet-black.svg)](https://developers.stellar.org)
 [![Built with Soroban](https://img.shields.io/badge/built%20with-Soroban-purple.svg)](https://stellar.org/soroban)
 
-A minimal reinsurance-style yield vault on **Stellar / Soroban**. Liquidity providers deposit USDC and receive `bvUSDC` shares that track the vault's net asset value, redeemable for USDC on-chain. Built on the OpenZeppelin Soroban vault, with a React + Freighter dApp and a multisig-governed KYC allowlist.
+A minimal reinsurance-style vault on **Stellar / Soroban**. Liquidity providers deposit USDC and receive `bvUSDC` shares that track the vault's net asset value, redeemable for USDC on-chain. Built on the OpenZeppelin Soroban vault, with a React + Freighter dApp and a multisig-governed KYC allowlist.
 
 > [!NOTE]
 > Learning-grade proof of concept ("mini-Ballast") running on Stellar **testnet**. Shares stay 1:1 with the underlying (no yield accrual) and the owner cannot withdraw LP funds. It exists to explore Soroban vaults, native multisig governance, and a backend-free signature-collection flow — not for production use.
@@ -13,7 +13,7 @@ A minimal reinsurance-style yield vault on **Stellar / Soroban**. Liquidity prov
 
 - **ERC-4626-style vault** — deposit USDC to mint `bvUSDC`; withdraw or redeem back to USDC (1:1, no yield). The vault *is* the share token (implements SEP-41).
 - **KYC allowlist** — `deposit`, `mint` and `transfer` require the counterparties to be allowlisted; exits (`withdraw` / `redeem`) stay open, so a de-listed holder can always leave.
-- **Native multisig governance** — the vault owner is a 2-of-3 Stellar account. `allow` / `disallow` are authorized by quorum with **no multisig code in the contract**: it calls `require_auth(owner)` and the protocol resolves the account's signers and thresholds.
+- **Native multisig governance** — the vault owner is a 2-of-3 Stellar account. `allow` / `disallow` are authorized by quorum with **no multisig code in the contract**: it calls `owner.require_auth()` and the protocol resolves the account's signers and thresholds.
 - **Backend-free signing** — signatures are gathered by passing **admin links** (a `#tx=` hash-fragment transport) between signers, then broadcast once the threshold is met. No server, no key custody.
 - **Live dashboard** — TVL, on-chain **LP count**, share price, your position, and gated Deposit / Withdraw. The `/admin` console is visible only to governance signers.
 
@@ -29,7 +29,7 @@ flowchart LR
   LP -- deposit USDC --> Vault
   Vault -- mint bvUSDC --> LP
   Gov -- allow / disallow --> Vault
-  Vault -. require_auth(owner) .-> Gov
+  Vault -. "owner.require_auth()" .-> Gov
 ```
 
 Entry is gated: a governance signer must `allow` an address before it can deposit. Authority is enforced on-chain — the `/admin` console only *collects* the quorum's signatures; the network verifies them against the owner account's thresholds.
@@ -109,6 +109,7 @@ Then run the full round-trip solo:
 | Vault (owner = gov multisig) | `CD5RPBZ6JK5RHJD2JFXCGKFSD7X7HSXCZGE7NNJLOEANPJQQHS57JTGK` |
 | Gov multisig (2-of-3, compliance admin) | `GDVL4VKURSZ7R66IWAORMUNHYHHDQ5Y65TMPWIGV6WDVKTRZZLQBYNXQ` |
 | USDC issuer (Circle testnet) | `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` |
+| USDC SAC (vault's underlying) | `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` |
 
 > [!TIP]
 > USDC is a **classic asset** (needs a trustline to hold); `bvUSDC` is a **Soroban token** (no trustline, and not shown in Horizon — read balances from the contract). A deposit is a **single transaction** with nested authorization, so there is no separate `approve` step.
