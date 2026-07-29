@@ -47,11 +47,6 @@ const DEFAULT_WALLET_BEHAVIOR: WalletBehavior = {
 
 const WALLET_BEHAVIORS: Record<string, WalletBehavior> = {
 	freighter: { getAddressBehavior: "standard", supportsGetNetwork: true },
-	"hot-wallet": {
-		getAddressBehavior: "popup-always",
-		supportsGetNetwork: true,
-		helpUrl: "https://github.com/hot-dao/hot-sdk-js/issues/6",
-	},
 	hana: { getAddressBehavior: "standard", supportsGetNetwork: false },
 	lobstr: {
 		getAddressBehavior: "popup-always",
@@ -128,28 +123,6 @@ function getWalletWarnings(walletId: string | null): WalletWarnings {
 	}
 }
 
-/**
- * A good-enough implementation of deepEqual.
- *
- * Used in this file to compare MappedBalances.
- *
- * Should maybe add & use a new dependency instead, if needed elsewhere.
- */
-function deepEqual<T>(a: T, b: T): boolean {
-	if (a === b) {
-		return true
-	}
-
-	const bothAreObjects =
-		a && b && typeof a === "object" && typeof b === "object"
-
-	return Boolean(
-		bothAreObjects &&
-		Object.keys(a).length === Object.keys(b).length &&
-		Object.entries(a).every(([k, v]) => deepEqual(v, b[k as keyof T])),
-	)
-}
-
 export interface WalletContextType {
 	address?: string
 	balances: MappedBalances
@@ -198,7 +171,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
 		const newBalances = await fetchBalances(address)
 		setBalances((prev) => {
-			if (deepEqual(newBalances, prev)) return prev
+			if (JSON.stringify(newBalances) === JSON.stringify(prev)) return prev
 			return newBalances
 		})
 	}, [address])
