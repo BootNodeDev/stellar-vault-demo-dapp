@@ -29,7 +29,7 @@ export interface AdminTxSummary {
 const TX_TIMEOUT_SECONDS = 24 * 60 * 60
 
 // Submission is two-step: sendTransaction only queues the tx, so we poll
-// getTransaction for ledger finality (30 × 2s ≈ 60s, well past the ~5s close).
+// getTransaction for ledger finality.
 const SUBMIT_POLL_ATTEMPTS = 30
 const SUBMIT_POLL_INTERVAL_MS = 2000
 
