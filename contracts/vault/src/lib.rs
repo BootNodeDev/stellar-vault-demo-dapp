@@ -28,8 +28,8 @@ const INSTANCE_TTL_THRESHOLD: u32 = 518_400; // ~30 days
 const INSTANCE_TTL_EXTEND_TO: u32 = 1_036_800; // ~60 days
 
 /// Extends the TTL of the contract's instance storage so it does not expire
-/// while the vault is in active use. Called from all six mutating
-/// entrypoints: deposit, mint, withdraw, redeem, transfer, transfer_from.
+/// while the vault is in active use. Call from every entrypoint that writes
+/// instance storage.
 fn extend_instance_ttl(e: &Env) {
     e.storage()
         .instance()
