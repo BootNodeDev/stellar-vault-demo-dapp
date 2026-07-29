@@ -1,4 +1,4 @@
-import VaultDashboard from "../components/vault/VaultDashboard"
+import VaultDashboard from "@/components/vault/VaultDashboard"
 
 const Home = () => <VaultDashboard />
 

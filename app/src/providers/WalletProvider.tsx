@@ -163,19 +163,7 @@ export interface WalletContextType {
 
 const POLL_INTERVAL = 1000
 
-export const WalletContext = // @ts-ignore
-	createContext<WalletContextType>({
-		isPending: true,
-		balances: {},
-		updateBalances: async () => {},
-		signTransaction,
-		walletWarnings: {
-			hasWarnings: false,
-			popupAlways: false,
-			noGetNetworkSupport: false,
-			messages: [],
-		},
-	})
+export const WalletContext = createContext<WalletContextType | null>(null)
 
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 	const [balances, setBalances] = useState<MappedBalances>({})

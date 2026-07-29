@@ -3,19 +3,19 @@ import * as StellarSdk from "@stellar/stellar-sdk"
 import { networkPassphrase } from "@stellar-scaffold/app-lib"
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { useAccountSigners } from "../hooks/useAccountSigners"
-import { useIsAdmin } from "../hooks/useIsAdmin"
-import { useWallet } from "../hooks/useWallet"
-import { decodeAdminLink, encodeAdminLink } from "../lib/adminLink"
+import { useAccountSigners } from "@/hooks/useAccountSigners"
+import { useIsAdmin } from "@/hooks/useIsAdmin"
+import { useWallet } from "@/hooks/useWallet"
+import { decodeAdminLink, encodeAdminLink } from "@/lib/adminLink"
 import {
 	buildAdminTx,
 	describeAdminTx,
 	submitAdminTx,
 	type AdminOp,
 	type AdminTxSummary,
-} from "../lib/adminTx"
-import { computeCollected } from "../lib/threshold"
-import { mergeSignatures } from "../lib/txSignatures"
+} from "@/lib/adminTx"
+import { computeCollected } from "@/lib/threshold"
+import { mergeSignatures } from "@/lib/txSignatures"
 
 type Status = { state: "idle" | "pending" | "success" | "error"; msg?: string }
 
