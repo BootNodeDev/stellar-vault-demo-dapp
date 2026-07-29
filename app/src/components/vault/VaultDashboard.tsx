@@ -245,28 +245,21 @@ function ActionPanel() {
 						? "Confirm the deposit in your wallet"
 						: "Confirm the withdrawal in your wallet",
 			})
-			const args =
-				tab === "deposit"
-					? {
-							assets: parsed,
-							receiver: address,
-							from: address,
-							operator: address,
-						}
-					: {
-							assets: parsed,
-							receiver: address,
-							owner: address,
-							operator: address,
-						}
 			const tx =
 				tab === "deposit"
-					? await vault.deposit(args as never, { publicKey: address })
-					: await vault.withdraw(args as never, { publicKey: address })
+					? await vault.deposit(
+							{ assets: parsed, receiver: address, from: address, operator: address },
+							{ publicKey: address },
+						)
+					: await vault.withdraw(
+							{ assets: parsed, receiver: address, owner: address, operator: address },
+							{ publicKey: address },
+						)
 			const sent = await tx.signAndSend({ signTransaction })
-			if ((sent as { result?: { isErr?: () => boolean } }).result?.isErr?.()) {
-				throw new Error("Transaction reverted on-chain")
-			}
+			// `.result` throws if the on-chain call reverted (a FAILED transaction
+			// has no return value) — signAndSend itself only throws for
+			// submission-level failures, so this access is what surfaces a revert.
+			void sent.result
 			setTxHash(
 				sent.sendTransactionResponse?.hash ??
 					sent.getTransactionResponse?.txHash ??

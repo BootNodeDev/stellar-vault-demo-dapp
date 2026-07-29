@@ -1,8 +1,8 @@
 import * as StellarSdk from "@stellar/stellar-sdk"
 import { horizonUrl } from "@stellar-scaffold/app-lib"
 import { useQuery } from "@tanstack/react-query"
-import { ADMIN_ACCOUNT } from "../lib/adminConfig"
-import { type AccountSigner } from "../lib/threshold"
+import { ADMIN_ACCOUNT } from "@/lib/adminConfig"
+import { type AccountSigner } from "@/lib/threshold"
 
 export interface AccountSigners {
 	signers: AccountSigner[]

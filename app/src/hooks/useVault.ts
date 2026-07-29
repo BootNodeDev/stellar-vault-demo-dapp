@@ -2,20 +2,20 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useWallet } from "@/hooks/useWallet"
 import { vault } from "@/lib/vaultClient"
 
-// Las lecturas del contrato se resuelven por simulación: el `.result` ya viene
-// poblado sin enviar transacción (gratis, sin firma).
+// Contract reads resolve via simulation: `.result` already comes populated
+// without sending a transaction (free, no signature).
 async function read<T>(call: Promise<{ result: T }>): Promise<T> {
 	return (await call).result
 }
 
 export interface VaultState {
-	totalAssets: bigint // TVL, en stroops
-	totalSupply: bigint // shares en circulación
+	totalAssets: bigint // TVL, in stroops
+	totalSupply: bigint // shares in circulation
 	symbol: string
-	shares: bigint // shares del usuario
-	positionValue: bigint // valor de la posición del usuario, en el subyacente
+	shares: bigint // the user's shares
+	positionValue: bigint // the user's position value, in the underlying asset
 	sharePrice: number
-	lpCount: number // cantidad de LPs con posición (holders con shares > 0)
+	lpCount: number // number of LPs with a position (holders with shares > 0)
 }
 
 export function useVault() {

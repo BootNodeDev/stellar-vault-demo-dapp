@@ -4,9 +4,9 @@ import { createRoot } from "react-dom/client"
 import { BrowserRouter } from "react-router-dom"
 import "@stellar-scaffold/app-lib/styles.css"
 import "./theme.css"
-import App from "./App.tsx"
-import { NotificationProvider } from "./providers/NotificationProvider.tsx"
-import { WalletProvider } from "./providers/WalletProvider.tsx"
+import App from "./App"
+import { NotificationProvider } from "./providers/NotificationProvider"
+import { WalletProvider } from "./providers/WalletProvider"
 
 const queryClient = new QueryClient({
 	defaultOptions: {

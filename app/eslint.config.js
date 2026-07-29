@@ -15,5 +15,18 @@ export default [
 				tsconfigRoot: import.meta.dirname,
 			},
 		},
+		rules: {
+			"no-restricted-imports": [
+				"error",
+				{
+					patterns: [
+						{
+							group: ["../*", "../../*"],
+							message: "Use the @/ alias instead of parent-relative imports",
+						},
+					],
+				},
+			],
+		},
 	},
 ]

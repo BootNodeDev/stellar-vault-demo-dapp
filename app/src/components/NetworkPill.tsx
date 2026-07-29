@@ -1,6 +1,6 @@
 import { networkStatus } from "@stellar-scaffold/app-lib"
 import React from "react"
-import { useWallet } from "../hooks/useWallet"
+import { useWallet } from "@/hooks/useWallet"
 
 const NetworkPill: React.FC = () => {
 	const { network, address } = useWallet()

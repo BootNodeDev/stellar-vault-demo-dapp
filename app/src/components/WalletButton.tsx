@@ -4,7 +4,7 @@ import {
 	shortAddress,
 } from "@stellar-scaffold/app-lib"
 import { useRef } from "react"
-import { useWallet } from "../hooks/useWallet"
+import { useWallet } from "@/hooks/useWallet"
 
 export const WalletButton = () => {
 	const dialogRef = useRef<HTMLDialogElement>(null)
