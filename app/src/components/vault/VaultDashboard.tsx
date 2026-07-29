@@ -38,7 +38,7 @@ export default function VaultDashboard() {
 	return (
 		<div>
 			<header className="vhead">
-				<h1>Ballast Reinsurance Vault</h1>
+				<h1>Reinsurance Vault</h1>
 				<p>
 					Deposit USDC and receive bvUSDC shares tracking the vault&apos;s net
 					asset value. Redeemable on-chain, any time.

@@ -28,7 +28,7 @@ const AppLayout = () => {
 					<span className="brand-icon">
 						<Vault size={20} weight="bold" />
 					</span>
-					<span className="brand-name">Ballast</span>
+					<span className="brand-name">Stellar Vault Demo</span>
 					<span className="brand-sub">Reinsurance Vault</span>
 				</div>
 				<nav className="topnav">
