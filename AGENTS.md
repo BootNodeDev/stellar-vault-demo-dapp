@@ -7,14 +7,16 @@ Guidance for agents and developers working in this repo.
 A minimal reinsurance-style yield vault on Stellar/Soroban (built on the OpenZeppelin
 Soroban vault) plus a React + Freighter dApp. Learning-grade PoC ("mini-Ballast"):
 LPs deposit USDC and receive `bvUSDC` shares that track the vault's NAV, redeemable
-on-chain. No yield accrual (shares stay 1:1), no KYC, the owner cannot withdraw LP funds.
-Runs on Stellar **testnet**.
+on-chain. No yield accrual (shares stay 1:1); the owner cannot withdraw LP funds. A KYC
+allowlist gates entry (`deposit`/`mint`) and share transfers; the owner is a 2-of-3
+multisig (compliance) that manages the allowlist. The contract also tracks the current
+LP count (holders with shares > 0). Runs on Stellar **testnet**.
 
 ## Layout
 
 - `contracts/vault` — the vault contract (ERC-4626-equivalent). Underlying = USDC via its SAC; shares = `bvUSDC` (7 decimals).
 - `contracts/counter` — throwaway learning contract.
-- `app/` — Vite + React + TypeScript frontend.
+- `app/` — Vite + React + TypeScript frontend (vault dashboard + `/admin` allowlist console with multisig signing).
 - `app-lib/` — Scaffold Stellar runtime + generated contract clients.
 - `environments.toml` — Scaffold Stellar deploy config (networks, accounts, contracts).
 
@@ -39,7 +41,8 @@ The scaffold default is a local network (`localhost:8000`). Set both to testnet 
 
 ## Deployed (testnet)
 
-- Vault: `CARQ5UVSDA2ERYX3TDBLGYAPLOWTOQCMC5TVE6YID7JMLR2PVKKFUW4J`
+- Vault (owner = gov multisig): `CD5RPBZ6JK5RHJD2JFXCGKFSD7X7HSXCZGE7NNJLOEANPJQQHS57JTGK`
+- Gov multisig (2-of-3, owner / compliance admin): `GDVL4VKURSZ7R66IWAORMUNHYHHDQ5Y65TMPWIGV6WDVKTRZZLQBYNXQ`
 - USDC (Circle testnet): issuer `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`,
   SAC `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA`
 

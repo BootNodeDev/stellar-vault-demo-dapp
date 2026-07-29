@@ -18,3 +18,9 @@ dist/
 
 # OS
 .DS_Store
+
+# SDD local cache
+.atl/
+
+# Soroban test snapshot artifacts
+test_snapshots/

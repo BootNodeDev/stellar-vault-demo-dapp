@@ -15,7 +15,10 @@ export function parseAmount(input: string): bigint {
 export function formatAmount(raw: bigint, displayDecimals = 2): string {
 	const whole = raw / SCALE
 	const frac = raw % SCALE
-	const fracStr = frac.toString().padStart(DECIMALS, "0").slice(0, displayDecimals)
+	const fracStr = frac
+		.toString()
+		.padStart(DECIMALS, "0")
+		.slice(0, displayDecimals)
 	const wholeStr = whole.toLocaleString("en-US")
 	return displayDecimals > 0 ? `${wholeStr}.${fracStr}` : wholeStr
 }

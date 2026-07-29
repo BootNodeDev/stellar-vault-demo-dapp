@@ -1556,6 +1556,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
+name = "stellar-access"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5aae4c50000565b08e97241a06cfb2cff4c3dfde12bdafa0b5303aca22139f38"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "stellar-contract-utils"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1571,6 +1580,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4828d07c8f3ae45483bdfd41e7e3aa43b4da3dbff1733d77c0f76bf247f01e6"
 dependencies = [
  "soroban-sdk",
+]
+
+[[package]]
+name = "stellar-macros"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a512f2975f47ab532537c7b3cc845bd5a39cab8f8c52c16388a26482f201883"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -1740,6 +1760,8 @@ name = "vault"
 version = "0.0.0"
 dependencies = [
  "soroban-sdk",
+ "stellar-access",
+ "stellar-macros",
  "stellar-tokens",
 ]
 
