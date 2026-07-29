@@ -5,7 +5,7 @@ Guidance for agents and developers working in this repo.
 ## What this is
 
 A minimal reinsurance-style yield vault on Stellar/Soroban (built on the OpenZeppelin
-Soroban vault) plus a React + Freighter dApp. Learning-grade PoC ("mini-Ballast"):
+Soroban vault) plus a React + Freighter dApp. Learning-grade PoC:
 LPs deposit USDC and receive `bvUSDC` shares that track the vault's NAV, redeemable
 on-chain. No yield accrual (shares stay 1:1); the owner cannot withdraw LP funds. A KYC
 allowlist gates entry (`deposit`/`mint`) and share transfers; the owner is a 2-of-3

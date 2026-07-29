@@ -1,4 +1,4 @@
-# Ballast Vault (mini)
+# Stellar Vault Demo
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 [![Network: Stellar Testnet](https://img.shields.io/badge/network-Stellar%20testnet-black.svg)](https://developers.stellar.org)
@@ -9,7 +9,7 @@ A minimal reinsurance-style vault on **Stellar / Soroban**. Liquidity providers 
 **Live demo (Stellar testnet):** <https://stellar-vault-demo-dapp-app-alpha.vercel.app>
 
 > [!NOTE]
-> Learning-grade proof of concept ("mini-Ballast") running on Stellar **testnet**. Shares stay 1:1 with the underlying (no yield accrual) and the owner cannot withdraw LP funds. It exists to explore Soroban vaults, native multisig governance, and a backend-free signature-collection flow — not for production use.
+> Learning-grade proof of concept running on Stellar **testnet**. Shares stay 1:1 with the underlying (no yield accrual) and the owner cannot withdraw LP funds. It exists to explore Soroban vaults, native multisig governance, and a backend-free signature-collection flow — not for production use.
 
 ## Features
 

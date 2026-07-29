@@ -75,7 +75,7 @@ impl VaultContract {
         Base::set_metadata(
             e,
             Vault::decimals(e),
-            String::from_str(e, "Ballast Vault USDC"),
+            String::from_str(e, "Stellar Vault Demo USDC"),
             String::from_str(e, "bvUSDC"),
         );
     }

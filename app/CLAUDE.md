@@ -1,6 +1,6 @@
 # app/ — frontend guidance
 
-Vite + React + TypeScript dApp for the Ballast vault. See the repo root
+Vite + React + TypeScript dApp for the vault. See the repo root
 [AGENTS.md](../AGENTS.md) for the big picture, deployed addresses, and contract gotchas.
 
 ## Commands
