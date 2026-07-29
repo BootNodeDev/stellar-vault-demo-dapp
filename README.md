@@ -84,6 +84,24 @@ Visible only when the connected wallet is a governance signer. Compose an `allow
 2. **Sign**, then share the generated link with the next signer; they open it and sign too.
 3. Once the medium threshold is met, **Submit** — it only broadcasts the already-signed transaction; the wallet is not prompted again.
 
+### Try it yourself — demo signer keys (testnet)
+
+> [!CAUTION]
+> These are **throwaway testnet keys, published on purpose** so anyone can try the multisig flow. They hold no value and control nothing real. **Never** reuse them on mainnet or send anything of value to them.
+
+The owner is a 2-of-3 multisig. Import these two governance signers into Freighter (Testnet) — together they meet the 2-of-3 threshold:
+
+| Signer | Secret seed |
+| --- | --- |
+| `gov` (owner + signer 1) | `SDAMOWWJSMUXRWJHHFZOPL4USLPCEBJO3SCQ6L3PTF4INVMQUPZPH3L2` |
+| `gov2` (signer 2) | `SDZBPTPPCQUL3KHM7EMMPSOO2O4FKQOVDU5G34524KBOUU7FJ6G2FIC3` |
+
+Then run the full round-trip solo:
+
+1. Fund your own wallet with friendbot and get test USDC (steps above).
+2. In `/admin`, connected as **gov**, compose `allow(<your address>)` and sign; share the link, switch to **gov2**, sign, then submit.
+3. Switch back to your wallet — now allowlisted — and deposit USDC to mint `bvUSDC`.
+
 ## Deployed (testnet)
 
 | Component | Address |
