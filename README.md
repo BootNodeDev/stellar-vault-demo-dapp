@@ -1,6 +1,6 @@
 # Stellar Vault Demo
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
+[![License: BUSL-1.1](https://img.shields.io/badge/License-BUSL--1.1-blue.svg)](./LICENSE)
 [![Network: Stellar Testnet](https://img.shields.io/badge/network-Stellar%20testnet-black.svg)](https://developers.stellar.org)
 [![Built with Soroban](https://img.shields.io/badge/built%20with-Soroban-purple.svg)](https://stellar.org/soroban)
 
